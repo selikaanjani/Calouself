@@ -19,28 +19,21 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 
 public class RegisterPage implements EventHandler<ActionEvent> {
-	private Label titleLbl;
 	private BorderPane borderContainer;
 	private GridPane gridContainer;
-	private FlowPane flowContainer;
-	private FlowPane flowLogin;
+	private FlowPane flowContainer, flowLogin;
 	public Scene scene;
-	
-	//usn pw num address role
-	private Label usernameLbl, passwordLbl, phoneNumberLbl, addressLbl, roleLbl;
-	private Label alrHaveAccLbl;
-	private Button loginBtn;
-	
-	private TextField usernameTF;
+	private Label usernameLbl, passwordLbl, phoneNumberLbl, addressLbl, roleLbl, titleLbl, alrHaveAccLbl;	
+	private TextField usernameTF, phoneNumberTF;
 	private PasswordField passwordPF;
-	private TextField phoneNumberTF;
 	private TextArea addressTA;
 	private RadioButton buyerRadio, sellerRadio;
 	private ToggleGroup roleGroup;	
-	private Button registerBtn;
+	private Button loginBtn, registerBtn;
 	private UserController user_controller = new UserController();
 	
 	private void initializeComponent() {
+		//initialize all components
 		borderContainer = new BorderPane();
 		gridContainer = new GridPane();	
 		flowContainer = new FlowPane();
@@ -72,6 +65,7 @@ public class RegisterPage implements EventHandler<ActionEvent> {
 	}
 	
 	private void initializeForm() {
+		//initialize the form by arranging the components and do styling
 		flowContainer.getChildren().add(buyerRadio);
 		flowContainer.getChildren().add(sellerRadio);
 		flowContainer.setHgap(10);
@@ -108,21 +102,17 @@ public class RegisterPage implements EventHandler<ActionEvent> {
 		borderContainer.setTop(titleLbl);
 		borderContainer.setCenter(gridContainer);
 		borderContainer.setBottom(flowLogin);
-		
-//		borderContainer.setStyle("-fx-border-color: red;");
-//		gridContainer.setStyle("-fx-border-color: blue;");
-//		flowContainer.setStyle("-fx-border-color: green;"); buat debug
-
-
 	}
 	
 	public RegisterPage() {
+		//constructor, when called will automatically switch scene to this one
 		initializeComponent();
 		initializeForm();
 		view.Main.redirect(scene);
 	}
 	
 	private void showAlert(String title, String message) {
+		//show error alert
 	    Alert alert = new Alert(Alert.AlertType.ERROR);
 	    alert.setTitle(title);
 	    alert.setHeaderText(null);
@@ -131,6 +121,7 @@ public class RegisterPage implements EventHandler<ActionEvent> {
 	}
 	
 	private void showSuccess(String title, String message) {
+		//show success alert
 	    Alert alert = new Alert(Alert.AlertType.INFORMATION);
 	    alert.setTitle(title);
 	    alert.setHeaderText(null);
@@ -140,8 +131,9 @@ public class RegisterPage implements EventHandler<ActionEvent> {
 
 	@Override
 	public void handle(ActionEvent e) {
+		//event handling
 		if (e.getSource() == registerBtn) {
-			//usn pw phonenumber address role
+			//if user click register
 			String username = usernameTF.getText();
 			String password = passwordPF.getText();
 			String phoneNumber = phoneNumberTF.getText();
@@ -151,12 +143,15 @@ public class RegisterPage implements EventHandler<ActionEvent> {
 			
 			String alert = user_controller.registerUser(username, password, phoneNumber, address, role);
 			if (alert.equals("user registration successful!")) {
+				//registration success
 				showSuccess("Registration", alert);
 				view.Main.redirect(new LoginPage().scene);
 			} else {
+				//registration failure
 				showAlert("Registration", alert);
 			}
 		} else if (e.getSource() == loginBtn) {
+			//if user click login
 			view.Main.redirect(new LoginPage().scene);
 		}
 	}

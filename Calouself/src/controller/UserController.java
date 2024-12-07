@@ -9,9 +9,10 @@ import model.User;
 
 public class UserController {
 	private Connect connect = Connect.getInstance();
-	private static User currentlyLoggedInUser;
+	private static User currentlyLoggedInUser; //static supaya yg diakses dari class" lain sama
 	
 	public ArrayList<User> getUsers(ArrayList<User> users) {
+		//return all users from database
 		String query = "SELECT * FROM User";
 		
 		PreparedStatement prepQuery = connect.preparedStatement(query);
@@ -30,29 +31,14 @@ public class UserController {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-//		String query = "SELECT * FROM user";
-//		connect.rs = connect.execQuery(query);
-//		
-//		try {
-//			while (connect.rs.next()) {
-//				String id = connect.rs.getString("UserID");
-//				String username = connect.rs.getString("Username");
-//				String password = connect.rs.getString("Password");
-//				String phoneNumber = connect.rs.getString("PhoneNumber");
-//				String address = connect.rs.getString("Address");
-//				String role = connect.rs.getString("Role");
-//				users.add(new User(id, username, password, phoneNumber, address, role));
-//			}
-//		} catch (Exception e) {
-//			// TODO: handle exception
-//		}
 		return users;
 	}
 	
 	public ArrayList<String> loginUser(String username, String password) {
+		//validate user credentials and do login
+		//return an arraylist of string, index 0 return string alert, index 1 return role nya (klo berhasil login)
 		ArrayList<User> users = new ArrayList<>();
 		users = getUsers(users);
-//		String alert = "";
 		ArrayList<String> temp = new ArrayList<String>();
 		if (username.length() == 0) {
 			temp.add("username can't be empty!");
@@ -66,18 +52,21 @@ public class UserController {
 		
 		for (User user : users) {
 			if (user.getUsername().equals(username) && user.getPassword().equals(password)) {
+				//login success
 				currentlyLoggedInUser = user;
-//				System.out.println(user);
 				temp.add("user login successful!");
 				temp.add(user.getRole());
 				return temp;
 			}
 		}
+		//login failure
 		temp.add("user not found!");
 		return temp;
 	}
 	
 	public String registerUser(String username, String password, String phoneNumber, String address, String role) {
+		//validate and insert new user to database
+		//return string alert (keterangannya)
 		ArrayList<User> users = new ArrayList<>();
 		users = getUsers(users);
 		String alert = "";
@@ -132,11 +121,14 @@ public class UserController {
 			return "role must be picked!";
 		}
 		
-		//format = US001
+		//udah slsi validasi
+		
+		//mau bikin newID dgn format ID = US001
 		String lastID = users.isEmpty() ? "US000" : users.get(users.size() - 1).getUserID();
 	    int numericPart = Integer.parseInt(lastID.substring(2));
 	    String newID = String.format("US%03d", numericPart + 1);
 		
+	    //do insert user
 	    String query = "INSERT INTO User (UserID, Username, Password, PhoneNumber, Address, Role) "+"VALUES (?, ?, ?, ?, ?, ?)";
 		PreparedStatement prepQuery = connect.preparedStatement(query);
 			
@@ -149,17 +141,15 @@ public class UserController {
 			prepQuery.setString(6, role);
 			prepQuery.executeUpdate();
 		} catch (SQLException e) {
-			e.printStackTrace();
+			return "error register user: " + e.getMessage();
 		}
-		
-//		String query = "INSERT INTO User " + "VALUES ('"+ newID +"', '"+ username +"', '"+ password +"', '"+ phoneNumber +"', '"+ address +"', '"+ role +"')";
-//		connect.execUpdate(query);
-		alert = "user registration successful!";
-		
+
+		alert = "user registration successful!";	
 		return alert;
 	}
 	
 	private boolean specialCharactersExist(String word) {
+		//check if there are special characters, dpt dri soal: Must include special characters (!, @, #, $, %, ^, &, *)
 		char[] specialCharacters = {'!', '@', '#', '$', '%', '^', '&', '*'};
 
         for (int i = 0; i < word.length(); i++) {
@@ -174,6 +164,7 @@ public class UserController {
 	}
 	
 	private boolean startsWithPlus62(String word) {
+		//check if phone number starts with +62
 		String temp = "" + word.charAt(0) + word.charAt(1) + word.charAt(2);
 		if (temp.equals("+62")) {
 			return true;
@@ -182,6 +173,7 @@ public class UserController {
 	}
 	
 	public User getCurrentlyLoggedInUser() {
+		//get user that's currently logged in
 		return currentlyLoggedInUser;	
 	}
 	

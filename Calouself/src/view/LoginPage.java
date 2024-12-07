@@ -21,16 +21,15 @@ public class LoginPage implements EventHandler<ActionEvent>{
 	public Scene scene;
 	private BorderPane borderContainer;
 	private GridPane gridContainer;
-	private Label titleLbl, usernameLbl, passwordLbl;
+	private Label titleLbl, usernameLbl, passwordLbl, dontHvAccLbl;
 	private TextField usernameTF;
 	private PasswordField passwordPF;
-	private Button loginBtn;
+	private Button loginBtn, registerBtn;
 	private FlowPane flowContainer;
-	private Label dontHvAccLbl;
-	private Button registerBtn;
 	private UserController user_controller = new UserController();
 	
 	private void initializeComponent() {
+		//initialize all components
 		borderContainer = new BorderPane();
 		flowContainer = new FlowPane();
 		gridContainer = new GridPane();
@@ -50,7 +49,7 @@ public class LoginPage implements EventHandler<ActionEvent>{
 	}
 	
 	private void initializeForm() {
-		
+		//initialize the form by arranging the components and do styling
 		gridContainer.setHgap(10);
         gridContainer.setVgap(10);
         gridContainer.setPadding(new Insets(20, 20, 20, 20));
@@ -67,7 +66,6 @@ public class LoginPage implements EventHandler<ActionEvent>{
 		gridContainer.add(loginBtn, 0, 2);
         GridPane.setMargin(loginBtn, new Insets(10, 0, 0, 0));
        
-		
 		flowContainer.setPadding(new Insets(0, 20, 20, 20));
 		flowContainer.getChildren().add(dontHvAccLbl);
 		flowContainer.getChildren().add(registerBtn);
@@ -76,21 +74,17 @@ public class LoginPage implements EventHandler<ActionEvent>{
 		borderContainer.setTop(titleLbl);
 		borderContainer.setCenter(gridContainer);
 		borderContainer.setBottom(flowContainer);
-		
-		
-//		borderContainer.setStyle("-fx-border-color: red;");
-//		gridContainer.setStyle("-fx-border-color: blue;");
-//		flowContainer.setStyle("-fx-border-color: green;");
-
 	}
 	
 	public LoginPage() {
+		//constructor, when called will automatically switch scene to this one
 		initializeComponent();
 		initializeForm();
 		view.Main.redirect(scene);
 	}
 	
 	private void showAlert(String title, String message) {
+		//show error alert
 	    Alert alert = new Alert(Alert.AlertType.ERROR);
 	    alert.setTitle(title);
 	    alert.setHeaderText(null);
@@ -99,6 +93,7 @@ public class LoginPage implements EventHandler<ActionEvent>{
 	}
 	
 	private void showSuccess(String title, String message) {
+		//show success alert
 	    Alert alert = new Alert(Alert.AlertType.INFORMATION);
 	    alert.setTitle(title);
 	    alert.setHeaderText(null);
@@ -108,14 +103,18 @@ public class LoginPage implements EventHandler<ActionEvent>{
 
 	@Override
 	public void handle(ActionEvent e) {
+		//event handling
 		if (e.getSource() == registerBtn) {
+			//if user click register
 			view.Main.redirect(new RegisterPage().scene);
 		} else if (e.getSource() == loginBtn) {
+			//if user click login
 			String username = usernameTF.getText();
 			String password = passwordPF.getText();
 			
 			ArrayList<String> alert = user_controller.loginUser(username, password);
 			if (alert.get(0).equals("user login successful!")) {
+				//login success
 				showSuccess("Login", alert.get(0));
 				String role = alert.get(1);
 				if (role.equals("Seller")) {
@@ -123,8 +122,10 @@ public class LoginPage implements EventHandler<ActionEvent>{
 				}
 				//else dia buyer
 			} else {
+				//login failure
 				showAlert("Login", alert.get(0));
 			}
 		}
 	}
+	
 }

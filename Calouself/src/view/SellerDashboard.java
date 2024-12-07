@@ -39,15 +39,15 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
     private ArrayList<Item> acceptedItems = new ArrayList<>();
     private ArrayList<Item> sellerAcceptedItems = new ArrayList<>();
     private ArrayList<Item> sellerHistoryItems = new ArrayList<>();
-    private String tempID;
+    private String tempID; //to store the itemID on the mouse clicked event
 
     public SellerDashboard() {
-//    	System.out.println(user_controller.getCurrentlyLoggedInUser());
+    	//constructor, when called it will switch to this scene
         initializeComponents();
         initializeMenuBar();
         initializeContentPanes();
 
-        // Default content: Home Page
+        // Default content: home pane
         borderContainer.setCenter(homePane);
         scrollContainer.setContent(borderContainer);
 
@@ -56,6 +56,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
     }
 
     private void initializeComponents() {
+    	//initialize all main components
     	scrollContainer = new ScrollPane();
     	borderContainer = new BorderPane();
         menuBar = new MenuBar();
@@ -68,6 +69,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
     }
 
     private void initializeMenuBar() {
+    	//initialize the menu bar
         homeMenuItem.setOnAction(this);
         manageItemsMenuItem.setOnAction(this);
         uploadItemMenuItem.setOnAction(this);
@@ -83,7 +85,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
     }
 
     private void initializeContentPanes() {
-        // Home Pane
+        // initialize home pane
         homePane = new VBox(10);
         homePane.setPadding(new Insets(20));
         homePane.setAlignment(Pos.CENTER);
@@ -91,7 +93,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
         titleHomeLbl.setStyle("-fx-font-weight: bold;");
         welcomeLbl1 = new Label("Welcome Seller " + user_controller.getCurrentlyLoggedInUser().getUsername() + "!");
         welcomeLbl1.setStyle("-fx-font-weight: bold;");
-//        It will show the item’s name, category, size and price of each item.
+        
         homePageItemsTable = new TableView<>();
         TableColumn<Item, String> nameCol = new TableColumn("Name");
 		nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
@@ -109,7 +111,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 		priceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
 		priceCol.setMinWidth(150);
 		
-		refreshHomeTable();
+		refreshHomeTable(); //refresh/obtain table data
 		
 		homePageItemsTable.getColumns().addAll(nameCol, categoryCol, sizeCol, priceCol);
 		homePageItemsTable.setMaxWidth(600);
@@ -118,7 +120,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
         homePane.getChildren().add(titleHomeLbl);
         homePane.getChildren().add(homePageItemsTable);
 
-        // Manage Items Pane
+        // initialzie manage items pane
         welcomeLbl2 = new Label("Welcome Seller " + user_controller.getCurrentlyLoggedInUser().getUsername() + "!");
         welcomeLbl2.setStyle("-fx-font-weight: bold;");
         
@@ -150,8 +152,9 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 		sellerAcceptedItemsTable.setMaxWidth(600);
 		sellerAcceptedItemsTable.setMinHeight(300);
 		sellerAcceptedItemsTable.setOnMouseClicked(tableMouseEvent());
-		refreshManageItemTable();
+		refreshManageItemTable(); //refresh/obtain table data
 		
+		//this is the form to update/delete
 		nameLbl2 = new Label("Name:");
         categoryLbl2 = new Label("Category:");
         sizeLbl2 = new Label("Size:");
@@ -191,7 +194,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 
         manageItemsPane.getChildren().addAll(welcomeLbl2, titleManageItemLbl, sellerAcceptedItemsTable, gridContainer2, manageButtons);
         
-        //upload new item pane
+        //initialize upload new item pane
         welcomeLbl3 = new Label("Welcome Seller " + user_controller.getCurrentlyLoggedInUser().getUsername() + "!");
         welcomeLbl3.setStyle("-fx-font-weight: bold;");
         nameLbl = new Label("Name:");
@@ -238,7 +241,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
         
         uploadItemPane.getChildren().addAll(welcomeLbl3, titleUploadItemLbl, gridContainer);
         
-        //viewAllItemsHistoryMenuItem Pane
+        //initialize viewAllItemsHistoryMenuItem Pane
         viewAllItemsHistoryPane = new VBox(10);
         viewAllItemsHistoryPane.setPadding(new Insets(20));
         viewAllItemsHistoryPane.setAlignment(Pos.CENTER);
@@ -274,13 +277,14 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 		historyItemsTable.getColumns().addAll(nameCol3, categoryCol3, sizeCol3, priceCol3, statusCol);
 		historyItemsTable.setMaxWidth(600);
 		historyItemsTable.setMinHeight(300);
-		refreshHistoryItemTable();
+		refreshHistoryItemTable(); //refresh/obtain table data
 		
 		viewAllItemsHistoryPane.getChildren().addAll(welcomeLbl4, titleViewAllItemsHistoryLbl, historyItemsTable);
 
     }
     
     private void showAlert(String title, String message) {
+    	//show error alert
 	    Alert alert = new Alert(Alert.AlertType.ERROR);
 	    alert.setTitle(title);
 	    alert.setHeaderText(null);
@@ -289,6 +293,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 	}
 	
 	private void showSuccess(String title, String message) {
+		//show success alert
 	    Alert alert = new Alert(Alert.AlertType.INFORMATION);
 	    alert.setTitle(title);
 	    alert.setHeaderText(null);
@@ -297,6 +302,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 	}
 	
 	private void refreshUploadForm() {
+		//refresh upload form to become empty again
 		nameTF.setText("");
 		categoryTF.setText("");
 		sizeTF.setText("");
@@ -304,14 +310,16 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 	}
 	
 	private void refreshManageItemForm() {
+		//refresh manage item form to become empty again
 		nameTF2.setText("");
 		categoryTF2.setText("");
 		sizeTF2.setText("");
 		priceTF2.setText("");
-		tempID = null;
+		tempID = null; 
 	}
 	
 	private void refreshHomeTable() {
+		//refresh/re-obtain table data
 		acceptedItems.removeAll(acceptedItems);
 		acceptedItems = item_controller.getAcceptedItems(acceptedItems);
 		ObservableList<Item> accItemsObs = FXCollections.observableArrayList(acceptedItems);
@@ -319,6 +327,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 	}
 
 	private void refreshHistoryItemTable() {
+		//refresh/re-obtain table data
 		sellerHistoryItems.removeAll(sellerHistoryItems);
 		sellerHistoryItems = item_controller.getSellerHistoryItems(sellerHistoryItems, user_controller.getCurrentlyLoggedInUser().getUserID());
 		ObservableList<Item> sellerHistoryItemsObs = FXCollections.observableArrayList(sellerHistoryItems);
@@ -326,6 +335,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 	}
 	
 	private void refreshManageItemTable() {
+		//refresh/re-obtain table data
 		sellerAcceptedItems.removeAll(sellerAcceptedItems);
 		sellerAcceptedItems = item_controller.getSellerAcceptedItems(sellerAcceptedItems, user_controller.getCurrentlyLoggedInUser().getUserID());
 		ObservableList<Item> sellerAccItemsObs = FXCollections.observableArrayList(sellerAcceptedItems);
@@ -333,6 +343,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 	}
 	
 	private EventHandler<MouseEvent> tableMouseEvent() {
+		//so that manage item table row can be clicked and we can obtain that particular data
 		return new EventHandler<MouseEvent>() {
 
 			@Override
@@ -354,13 +365,18 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 
     @Override
     public void handle(ActionEvent e) {
+    	//event handling
         if (e.getSource() == homeMenuItem) {
+        	//if user click home menu
         	borderContainer.setCenter(homePane);
         } else if (e.getSource() == manageItemsMenuItem) {
+        	//if user click manage item menu
         	borderContainer.setCenter(manageItemsPane);
         } else if (e.getSource() == uploadItemMenuItem) {
+        	//if user click upload new item menu
         	borderContainer.setCenter(uploadItemPane);
         } else if (e.getSource() == uploadBtn) {
+        	//if user click upload button
         	String name = nameTF.getText();
         	String category = categoryTF.getText();
         	String size = sizeTF.getText();
@@ -369,15 +385,18 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
         	String alert = item_controller.uploadItem(name, category, size, price, user_controller.getCurrentlyLoggedInUser().getUserID());
         	
         	if (alert.equals("item upload successful!")) {
-				showSuccess("Item Upload", alert);
+        		//upload success
+				showSuccess("Item Upload", alert + " You can view it in the view all items history menu to check on its status.");
 				refreshUploadForm();
 				refreshManageItemTable();
 				refreshHomeTable();
 				refreshHistoryItemTable();
 			} else {
+				//upload failure
 				showAlert("Item Upload", alert);
 			}
         } else if (e.getSource() == editBtn) {
+        	//if user click edit button
         	String name = nameTF2.getText();
         	String category = categoryTF2.getText();
         	String size = sizeTF2.getText();
@@ -385,24 +404,32 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
         	
         	String alert = item_controller.editItem(name, category, size, price, tempID);
         	if (alert.equals("item edit successful!")) {
+        		//edit success
 				showSuccess("Item Edit", alert);
 				refreshManageItemForm();
 				refreshManageItemTable();
 				refreshHomeTable();
 				refreshHistoryItemTable();
 			} else {
+				//edit failure
 				showAlert("Item Edit", alert);
 			}
         } else if (e.getSource() == viewAllItemsHistoryMenuItem) {
+        	//if user click view all items historu menu
         	borderContainer.setCenter(viewAllItemsHistoryPane);
         } else if (e.getSource() == deleteBtn) {
+        	//if user click delete button
         	String alert = item_controller.deleteItem(tempID);
         	if (alert.equals("item delete successful!")) {
+        		//delete success
         		showSuccess("Item Delete", alert);
 				refreshManageItemForm();
 				refreshManageItemTable();
 				refreshHomeTable();
 				refreshHistoryItemTable();
+        	} else {
+        		//delete failure
+        		showAlert("Item Delete", alert);
         	}
         }
     }

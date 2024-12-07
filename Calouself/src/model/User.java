@@ -6,7 +6,7 @@ public class User {
 //	 Password VARCHAR(255) NOT NULL,
 //	 PhoneNumber VARCHAR(255), //krna di soal gaada tulisan cannot be empty
 //	 Address VARCHAR(255) NOT NULL,
-//	 Role VARCHAR(255) NOT NULL)
+//	 Role VARCHAR(255) NOT NULL
 
 	private String userID;
 	private String username;
@@ -21,16 +21,6 @@ public class User {
 		this.username = username;
 		this.password = password;
 		this.phoneNumber = phoneNumber;
-		this.address = address;
-		this.role = role;
-	}
-	
-	public User(String userID, String username, String password, String address, String role) {
-		//bs jdi phone number ga diisi krna ga wajib jg di soal, gaada tulisan cannot be empty
-		super();
-		this.userID = userID;
-		this.username = username;
-		this.password = password;
 		this.address = address;
 		this.role = role;
 	}

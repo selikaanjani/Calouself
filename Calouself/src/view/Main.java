@@ -16,12 +16,13 @@ public class Main extends Application {
 	private static Stage stage;
 
 	public static void redirect(Scene newScene) {
+		//to navigate between views/scenes
 		stage.setScene(newScene);
 		stage.centerOnScreen();
 		stage.setResizable(false);
 		stage.show();
 		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-			
+			//confirm if user want to close the application
 			@Override
 			public void handle(WindowEvent arg0) {
 				// TODO Auto-generated method stub
