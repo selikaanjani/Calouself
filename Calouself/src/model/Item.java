@@ -8,8 +8,8 @@ public class Item {
 //	 Price VARCHAR(255) NOT NULL,
 //	 UserID VARCHAR(255) NOT NULL, //buat seller nya siapa
 //	 ItemStatus VARCHAR(255) NOT NULL, //pending accepted denied
-//	 ItemWishlist VARCHAR(255), //ini krg tau buat apa
-//	 ItemOfferStatus VARCHAR(255), //ini not null dlu krna blm tentu bkl ada offer apa lgi pas baru create?
+//	 ItemWishlist VARCHAR(255), //?
+//	 ItemOfferStatus VARCHAR(255), //ini not null dlu krna blm tentu bkl ada offer apa lgi pas baru create udah psti blm ada
 //	 FOREIGN KEY (UserID) REFERENCES User(UserID))
 
 	private String itemID;
