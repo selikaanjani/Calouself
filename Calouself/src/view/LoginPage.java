@@ -121,7 +121,9 @@ public class LoginPage implements EventHandler<ActionEvent>{
 				if (role.equals("Seller")) {
 					view.Main.redirect(new SellerDashboard().scene);
 				}
-				//else dia buyer
+				else if (role.equals("Buyer")) {
+					view.Main.redirect(new BuyerDashboard().scene);
+				}
 			} else {
 				showAlert("Login", alert.get(0));
 			}
