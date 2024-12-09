@@ -43,6 +43,10 @@ public class Item {
 		this.itemStatus = itemStatus;
 		//itemwishlist krg tau apa, itemofferstatus klo baru create krna emg blm ada offer jdi kosong dlu
 	}
+	
+	public Item() {
+		//default constructor
+	}
 
 	public String getItemID() {
 		return itemID;

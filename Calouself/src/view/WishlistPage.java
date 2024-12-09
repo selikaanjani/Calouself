@@ -2,10 +2,8 @@ package view;
 
 import java.util.ArrayList;
 
-import controller.ItemController;
 import controller.UserController;
 import controller.WishlistController;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -38,10 +36,8 @@ public class WishlistPage implements EventHandler<ActionEvent> {
 	private VBox homePane;
 	private ScrollPane scrollContainer;
 	private Label titleHomeLbl, welcomeLbl;
-	private TableView<Item> homePageItemsTable;
-	private ArrayList<Item> acceptedItems = new ArrayList<>();
+	private TableView<Item> wishlistTable;
 	private UserController user_controller = new UserController();
-	private ItemController item_controller = new ItemController();
 	private WishlistController wishlist_controller = new WishlistController();
 
 	public WishlistPage() {
@@ -94,7 +90,7 @@ public class WishlistPage implements EventHandler<ActionEvent> {
 		welcomeLbl.setStyle("-fx-font-weight: bold;");
 
 		// Table showing items with actions
-		homePageItemsTable = new TableView<>();
+		wishlistTable = new TableView<>();
 		TableColumn<Item, String> nameCol = new TableColumn("Name");
 		nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
 		nameCol.setMinWidth(150);
@@ -111,12 +107,11 @@ public class WishlistPage implements EventHandler<ActionEvent> {
 		priceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
 		priceCol.setMinWidth(150);
 
-		// Add remove from wishlist button
+		// Add remove button in wishlist table
 		TableColumn<Item, Void> actionCol = new TableColumn<>("Actions");
 		actionCol.setMinWidth(150);
 		actionCol.setCellFactory(param -> new TableCell<Item, Void>() {
 			private final Button removeFromWishlistBtn = new Button("Remove from Wishlist");
-
 			{
 				removeFromWishlistBtn.setOnAction(event -> {
 					Item item = getTableView().getItems().get(getIndex());
@@ -137,32 +132,36 @@ public class WishlistPage implements EventHandler<ActionEvent> {
 
 		refreshWishlistTable();
 
-		homePageItemsTable.getColumns().addAll(nameCol, categoryCol, sizeCol, priceCol, actionCol);
-		homePageItemsTable.setMaxWidth(600);
-		homePageItemsTable.setMinHeight(300);
+		wishlistTable.getColumns().addAll(nameCol, categoryCol, sizeCol, priceCol, actionCol);
+		wishlistTable.setMaxWidth(600);
+		wishlistTable.setMinHeight(300);
 		homePane.getChildren().add(welcomeLbl);
 		homePane.getChildren().add(titleHomeLbl);
-		homePane.getChildren().add(homePageItemsTable);
+		homePane.getChildren().add(wishlistTable);
 	}
 
 	private void refreshWishlistTable() {
-		acceptedItems.removeAll(acceptedItems);
-		acceptedItems = item_controller.getAcceptedItems(acceptedItems);
-		ObservableList<Item> accItemsObs = FXCollections.observableArrayList(acceptedItems);
-		homePageItemsTable.setItems(accItemsObs);
+		String userID = user_controller.getCurrentlyLoggedInUser().getUserID();
+		ArrayList<Item> wishlistItems = wishlist_controller.viewWishlist(userID);
+
+		ObservableList<Item> wishlistObs = FXCollections.observableArrayList(wishlistItems);
+		wishlistTable.setItems(wishlistObs); // wishlistTable adalah TableView<Item>
+
 	}
 
 	private void removeFromWishlist(Item item) {
 		String userID = user_controller.getCurrentlyLoggedInUser().getUserID();
 		String itemID = item.getItemID();
 		String wishlistID = wishlist_controller.getWishlistID(userID, itemID);
+
 		if (!wishlistID.equals("Wishlist entry not found!")) {
-			String result = wishlist_controller.removeFromWishlist(wishlistID);
+			String result = wishlist_controller.removeItemFromWishlist(wishlistID);
 			if (result.startsWith("Item successfully removed")) {
-				acceptedItems.remove(item); // Remove item from table view
-				homePageItemsTable.setItems(FXCollections.observableArrayList(acceptedItems));
+				showSuccess("Success", result);
+				refreshWishlistTable(); // Refresh the table view after removal
+			} else {
+				showAlert("Error", "Failed to remove the item from the wishlist.");
 			}
-			showSuccess("Success", result);
 		} else {
 			showAlert("Error", "Wishlist entry not found for the selected item.");
 		}

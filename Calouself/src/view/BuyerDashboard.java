@@ -152,7 +152,7 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 		String userID = user_controller.getCurrentlyLoggedInUser().getUserID();
 		String itemID = item.getItemID();
 
-		String isAdded = wishlist_controller.addToWishlist(userID, itemID);
+		String isAdded = wishlist_controller.addItemToWishlist(userID, itemID);
 
 		if (isAdded.equals("Item successfully added to wishlist!")) {
 			showSuccess("Success", "Item successfully added to wishlist!");

@@ -2,15 +2,15 @@ package controller;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 import database.Connect;
-import model.Wishlist;
+import model.Item;
 
 public class WishlistController {
 	private static Connect connect = Connect.getInstance();
-	private Wishlist wishlists;
 
-	public String addToWishlist(String userID, String itemID) {
+	public String addItemToWishlist(String userID, String itemID) {
 		// Generate new Wishlist ID with format WL001
 		String queryID = "SELECT MAX(WishlistID) AS lastID FROM Wishlist";
 		String lastID = "WL000";
@@ -45,7 +45,7 @@ public class WishlistController {
 		}
 	}
 
-	public String removeFromWishlist(String wishlistID) {
+	public String removeItemFromWishlist(String wishlistID) {
 		String query = "DELETE FROM Wishlist WHERE WishlistID = ?";
 		try (PreparedStatement prepQuery = connect.preparedStatement(query)) {
 			prepQuery.setString(1, wishlistID);
@@ -83,6 +83,33 @@ public class WishlistController {
 		} catch (SQLException e) {
 			return "Error retrieving WishlistID: " + e.getMessage();
 		}
+	}
+
+	public ArrayList<Item> viewWishlist(String userID) {
+		ArrayList<Item> wishlistItems = new ArrayList<>();
+		String query = "SELECT I.ItemID, I.Name, I.Category, I.Size, I.Price " + "FROM Wishlist W "
+				+ "JOIN Item I ON W.ItemID = I.ItemID " + "WHERE W.UserID = ?";
+		
+		PreparedStatement prepQuery = connect.preparedStatement(query);
+
+		try {
+			prepQuery.setString(1, userID);
+			connect.rs = prepQuery.executeQuery();
+
+			while (connect.rs.next()) {
+				Item item = new Item();
+				item.setItemID(connect.rs.getString("ItemID"));
+				item.setName(connect.rs.getString("Name"));
+				item.setCategory(connect.rs.getString("Category"));
+				item.setSize(connect.rs.getString("Size"));
+				item.setPrice(connect.rs.getString("Price"));
+				wishlistItems.add(item);
+			}
+		} catch (SQLException e) {
+			System.out.println("Error fetching wishlist: " + e.getMessage());
+		}
+
+		return wishlistItems;
 	}
 
 }
