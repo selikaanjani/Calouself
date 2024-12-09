@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import controller.ItemController;
 import controller.UserController;
 import controller.WishlistController;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -27,7 +28,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import model.Item;
 
-public class BuyerDashboard implements EventHandler<ActionEvent> {
+public class WishlistPage implements EventHandler<ActionEvent> {
 
 	public Scene scene;
 	private BorderPane borderContainer;
@@ -43,7 +44,7 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 	private ItemController item_controller = new ItemController();
 	private WishlistController wishlist_controller = new WishlistController();
 
-	public BuyerDashboard() {
+	public WishlistPage() {
 		initializeComponents();
 		createMenuBar();
 		initializeContentPanes();
@@ -69,7 +70,6 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 	}
 
 	public void createMenuBar() {
-		// Corrected redundant additions
 		homeMenu.getItems().add(homeItem);
 		wishlistMenu.getItems().add(wishlistItem);
 		purchaseMenu.getItems().add(purchaseItem);
@@ -87,28 +87,40 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 		homePane = new VBox(10);
 		homePane.setPadding(new Insets(20));
 		homePane.setAlignment(Pos.CENTER);
-		titleHomeLbl = new Label("Home Page: All Items Approved By Admin");
+		titleHomeLbl = new Label(
+				"Wishlist Page: " + user_controller.getCurrentlyLoggedInUser().getUsername() + "'s wishlist");
 		titleHomeLbl.setStyle("-fx-font-weight: bold;");
 		welcomeLbl = new Label("Welcome Buyer " + user_controller.getCurrentlyLoggedInUser().getUsername() + "!");
 		welcomeLbl.setStyle("-fx-font-weight: bold;");
 
-		// Table displaying items
+		// Table showing items with actions
 		homePageItemsTable = new TableView<>();
-		TableColumn<Item, String> nameCol = createTableColumn("Name", "name");
-		TableColumn<Item, Integer> categoryCol = createTableColumn("Category", "category");
-		TableColumn<Item, String> sizeCol = createTableColumn("Size", "size");
-		TableColumn<Item, String> priceCol = createTableColumn("Price", "price");
+		TableColumn<Item, String> nameCol = new TableColumn("Name");
+		nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
+		nameCol.setMinWidth(150);
 
-		// Actions column: Add to Wishlist
+		TableColumn<Item, Integer> categoryCol = new TableColumn("Category");
+		categoryCol.setCellValueFactory(new PropertyValueFactory<>("category"));
+		categoryCol.setMinWidth(150);
+
+		TableColumn<Item, String> sizeCol = new TableColumn("Size");
+		sizeCol.setCellValueFactory(new PropertyValueFactory<>("size"));
+		sizeCol.setMinWidth(150);
+
+		TableColumn<Item, String> priceCol = new TableColumn("Price");
+		priceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
+		priceCol.setMinWidth(150);
+
+		// Add remove from wishlist button
 		TableColumn<Item, Void> actionCol = new TableColumn<>("Actions");
 		actionCol.setMinWidth(150);
 		actionCol.setCellFactory(param -> new TableCell<Item, Void>() {
-			private final Button addToWishlistBtn = new Button("Add to Wishlist");
+			private final Button removeFromWishlistBtn = new Button("Remove from Wishlist");
 
 			{
-				addToWishlistBtn.setOnAction(event -> {
+				removeFromWishlistBtn.setOnAction(event -> {
 					Item item = getTableView().getItems().get(getIndex());
-					addToWishlist(item);
+					removeFromWishlist(item);
 				});
 			}
 
@@ -116,14 +128,14 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 			protected void updateItem(Void item, boolean empty) {
 				super.updateItem(item, empty);
 				if (!empty) {
-					setGraphic(addToWishlistBtn);
+					setGraphic(removeFromWishlistBtn);
 				} else {
 					setGraphic(null);
 				}
 			}
 		});
 
-		refreshHomeTable();
+		refreshWishlistTable();
 
 		homePageItemsTable.getColumns().addAll(nameCol, categoryCol, sizeCol, priceCol, actionCol);
 		homePageItemsTable.setMaxWidth(600);
@@ -133,36 +145,30 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 		homePane.getChildren().add(homePageItemsTable);
 	}
 
-	//Method to create a TableColumn
-	private <T> TableColumn<Item, T> createTableColumn(String title, String property) {
-		TableColumn<Item, T> column = new TableColumn<>(title);
-		column.setCellValueFactory(new PropertyValueFactory<>(property));
-		column.setMinWidth(150);
-		return column;
-	}
-
-	private void refreshHomeTable() {
+	private void refreshWishlistTable() {
 		acceptedItems.removeAll(acceptedItems);
 		acceptedItems = item_controller.getAcceptedItems(acceptedItems);
 		ObservableList<Item> accItemsObs = FXCollections.observableArrayList(acceptedItems);
 		homePageItemsTable.setItems(accItemsObs);
 	}
 
-	private void addToWishlist(Item item) {
+	private void removeFromWishlist(Item item) {
 		String userID = user_controller.getCurrentlyLoggedInUser().getUserID();
 		String itemID = item.getItemID();
-
-		String isAdded = wishlist_controller.addToWishlist(userID, itemID);
-
-		if (isAdded.equals("Item successfully added to wishlist!")) {
-			showSuccess("Success", "Item successfully added to wishlist!");
+		String wishlistID = wishlist_controller.getWishlistID(userID, itemID);
+		if (!wishlistID.equals("Wishlist entry not found!")) {
+			String result = wishlist_controller.removeFromWishlist(wishlistID);
+			if (result.startsWith("Item successfully removed")) {
+				acceptedItems.remove(item); // Remove item from table view
+				homePageItemsTable.setItems(FXCollections.observableArrayList(acceptedItems));
+			}
+			showSuccess("Success", result);
 		} else {
-			showAlert("Failed", "Error adding item to wishlist");
+			showAlert("Error", "Wishlist entry not found for the selected item.");
 		}
 	}
 
 	private void showSuccess(String title, String message) {
-		// show success alert
 		Alert alert = new Alert(Alert.AlertType.INFORMATION);
 		alert.setTitle(title);
 		alert.setHeaderText(null);
@@ -171,7 +177,6 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 	}
 
 	private void showAlert(String title, String message) {
-		// show error alert
 		Alert alert = new Alert(Alert.AlertType.ERROR);
 		alert.setTitle(title);
 		alert.setHeaderText(null);
@@ -182,12 +187,11 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 	@Override
 	public void handle(ActionEvent e) {
 		if (e.getSource() == wishlistItem) {
-			// Redirect to the WishlistPage
-			view.Main.redirect(new WishlistPage().scene);
+			return;
 		} else if (e.getSource() == homeItem) {
-			// Existing code to handle Home Page redirection
 			borderContainer.setCenter(homePane);
 			scrollContainer.setContent(borderContainer);
+			view.Main.redirect(new BuyerDashboard().scene);
 		} else if (e.getSource() == purchaseItem) {
 			// Handle "View Purchase History" menu item if needed
 		}

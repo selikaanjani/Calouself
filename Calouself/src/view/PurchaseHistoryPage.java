@@ -12,7 +12,6 @@ import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
@@ -27,7 +26,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import model.Item;
 
-public class BuyerDashboard implements EventHandler<ActionEvent> {
+public class PurchaseHistoryPage implements EventHandler<ActionEvent> {
 
 	public Scene scene;
 	private BorderPane borderContainer;
@@ -43,7 +42,7 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 	private ItemController item_controller = new ItemController();
 	private WishlistController wishlist_controller = new WishlistController();
 
-	public BuyerDashboard() {
+	public PurchaseHistoryPage() {
 		initializeComponents();
 		createMenuBar();
 		initializeContentPanes();
@@ -99,33 +98,9 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 		TableColumn<Item, String> sizeCol = createTableColumn("Size", "size");
 		TableColumn<Item, String> priceCol = createTableColumn("Price", "price");
 
-		// Actions column: Add to Wishlist
-		TableColumn<Item, Void> actionCol = new TableColumn<>("Actions");
-		actionCol.setMinWidth(150);
-		actionCol.setCellFactory(param -> new TableCell<Item, Void>() {
-			private final Button addToWishlistBtn = new Button("Add to Wishlist");
-
-			{
-				addToWishlistBtn.setOnAction(event -> {
-					Item item = getTableView().getItems().get(getIndex());
-					addToWishlist(item);
-				});
-			}
-
-			@Override
-			protected void updateItem(Void item, boolean empty) {
-				super.updateItem(item, empty);
-				if (!empty) {
-					setGraphic(addToWishlistBtn);
-				} else {
-					setGraphic(null);
-				}
-			}
-		});
-
 		refreshHomeTable();
 
-		homePageItemsTable.getColumns().addAll(nameCol, categoryCol, sizeCol, priceCol, actionCol);
+		homePageItemsTable.getColumns().addAll(nameCol, categoryCol, sizeCol, priceCol);
 		homePageItemsTable.setMaxWidth(600);
 		homePageItemsTable.setMinHeight(300);
 		homePane.getChildren().add(welcomeLbl);
@@ -133,7 +108,6 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 		homePane.getChildren().add(homePageItemsTable);
 	}
 
-	//Method to create a TableColumn
 	private <T> TableColumn<Item, T> createTableColumn(String title, String property) {
 		TableColumn<Item, T> column = new TableColumn<>(title);
 		column.setCellValueFactory(new PropertyValueFactory<>(property));
@@ -148,48 +122,10 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 		homePageItemsTable.setItems(accItemsObs);
 	}
 
-	private void addToWishlist(Item item) {
-		String userID = user_controller.getCurrentlyLoggedInUser().getUserID();
-		String itemID = item.getItemID();
-
-		String isAdded = wishlist_controller.addToWishlist(userID, itemID);
-
-		if (isAdded.equals("Item successfully added to wishlist!")) {
-			showSuccess("Success", "Item successfully added to wishlist!");
-		} else {
-			showAlert("Failed", "Error adding item to wishlist");
-		}
-	}
-
-	private void showSuccess(String title, String message) {
-		// show success alert
-		Alert alert = new Alert(Alert.AlertType.INFORMATION);
-		alert.setTitle(title);
-		alert.setHeaderText(null);
-		alert.setContentText(message);
-		alert.showAndWait();
-	}
-
-	private void showAlert(String title, String message) {
-		// show error alert
-		Alert alert = new Alert(Alert.AlertType.ERROR);
-		alert.setTitle(title);
-		alert.setHeaderText(null);
-		alert.setContentText(message);
-		alert.showAndWait();
-	}
-
 	@Override
-	public void handle(ActionEvent e) {
-		if (e.getSource() == wishlistItem) {
-			// Redirect to the WishlistPage
-			view.Main.redirect(new WishlistPage().scene);
-		} else if (e.getSource() == homeItem) {
-			// Existing code to handle Home Page redirection
-			borderContainer.setCenter(homePane);
-			scrollContainer.setContent(borderContainer);
-		} else if (e.getSource() == purchaseItem) {
-			// Handle "View Purchase History" menu item if needed
-		}
+	public void handle(ActionEvent arg0) {
+		// TODO Auto-generated method stub
+
 	}
+
 }
