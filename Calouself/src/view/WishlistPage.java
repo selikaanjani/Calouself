@@ -49,7 +49,8 @@ public class WishlistPage implements EventHandler<ActionEvent> {
 		borderContainer.setCenter(homePane);
 		scrollContainer.setContent(borderContainer);
 
-		scene = new Scene(scrollContainer, 650, 400);
+		// scene = new Scene(scrollContainer, 650, 400);
+		scene = new Scene(scrollContainer, 800, 600);
 		view.Main.redirect(scene);
 	}
 
@@ -133,8 +134,8 @@ public class WishlistPage implements EventHandler<ActionEvent> {
 		refreshWishlistTable();
 
 		wishlistTable.getColumns().addAll(nameCol, categoryCol, sizeCol, priceCol, actionCol);
-		wishlistTable.setMaxWidth(600);
-		wishlistTable.setMinHeight(300);
+		wishlistTable.setMaxWidth(800);
+		wishlistTable.setMinHeight(500);
 		homePane.getChildren().add(welcomeLbl);
 		homePane.getChildren().add(titleHomeLbl);
 		homePane.getChildren().add(wishlistTable);
@@ -145,7 +146,7 @@ public class WishlistPage implements EventHandler<ActionEvent> {
 		ArrayList<Item> wishlistItems = wishlist_controller.viewWishlist(userID);
 
 		ObservableList<Item> wishlistObs = FXCollections.observableArrayList(wishlistItems);
-		wishlistTable.setItems(wishlistObs); // wishlistTable adalah TableView<Item>
+		wishlistTable.setItems(wishlistObs);
 
 	}
 
@@ -186,13 +187,15 @@ public class WishlistPage implements EventHandler<ActionEvent> {
 	@Override
 	public void handle(ActionEvent e) {
 		if (e.getSource() == wishlistItem) {
-			return;
+			// Reload wishlist page
+			view.Main.redirect(new WishlistPage().scene);
 		} else if (e.getSource() == homeItem) {
-			borderContainer.setCenter(homePane);
-			scrollContainer.setContent(borderContainer);
+			// Redirect to the home
 			view.Main.redirect(new BuyerDashboard().scene);
 		} else if (e.getSource() == purchaseItem) {
-			// Handle "View Purchase History" menu item if needed
+			// Redirect to the Purchase History Page
+			view.Main.redirect(new PurchaseHistoryPage().scene);
 		}
+
 	}
 }

@@ -40,7 +40,6 @@ public class PurchaseHistoryPage implements EventHandler<ActionEvent> {
 	private ArrayList<Item> acceptedItems = new ArrayList<>();
 	private UserController user_controller = new UserController();
 	private ItemController item_controller = new ItemController();
-	private WishlistController wishlist_controller = new WishlistController();
 
 	public PurchaseHistoryPage() {
 		initializeComponents();
@@ -51,7 +50,8 @@ public class PurchaseHistoryPage implements EventHandler<ActionEvent> {
 		borderContainer.setCenter(homePane);
 		scrollContainer.setContent(borderContainer);
 
-		scene = new Scene(scrollContainer, 650, 400);
+		// scene = new Scene(scrollContainer, 650, 400);
+		scene = new Scene(scrollContainer, 800, 600);
 		view.Main.redirect(scene);
 	}
 
@@ -68,7 +68,6 @@ public class PurchaseHistoryPage implements EventHandler<ActionEvent> {
 	}
 
 	public void createMenuBar() {
-		// Corrected redundant additions
 		homeMenu.getItems().add(homeItem);
 		wishlistMenu.getItems().add(wishlistItem);
 		purchaseMenu.getItems().add(purchaseItem);
@@ -86,9 +85,9 @@ public class PurchaseHistoryPage implements EventHandler<ActionEvent> {
 		homePane = new VBox(10);
 		homePane.setPadding(new Insets(20));
 		homePane.setAlignment(Pos.CENTER);
-		titleHomeLbl = new Label("Home Page: All Items Approved By Admin");
+		titleHomeLbl = new Label("Purchase History");
 		titleHomeLbl.setStyle("-fx-font-weight: bold;");
-		welcomeLbl = new Label("Welcome Buyer " + user_controller.getCurrentlyLoggedInUser().getUsername() + "!");
+		welcomeLbl = new Label(user_controller.getCurrentlyLoggedInUser().getUsername() + "'s Purchase History");
 		welcomeLbl.setStyle("-fx-font-weight: bold;");
 
 		// Table displaying items
@@ -101,8 +100,8 @@ public class PurchaseHistoryPage implements EventHandler<ActionEvent> {
 		refreshHomeTable();
 
 		homePageItemsTable.getColumns().addAll(nameCol, categoryCol, sizeCol, priceCol);
-		homePageItemsTable.setMaxWidth(600);
-		homePageItemsTable.setMinHeight(300);
+		homePageItemsTable.setMaxWidth(800);
+		homePageItemsTable.setMinHeight(500);
 		homePane.getChildren().add(welcomeLbl);
 		homePane.getChildren().add(titleHomeLbl);
 		homePane.getChildren().add(homePageItemsTable);
@@ -111,7 +110,7 @@ public class PurchaseHistoryPage implements EventHandler<ActionEvent> {
 	private <T> TableColumn<Item, T> createTableColumn(String title, String property) {
 		TableColumn<Item, T> column = new TableColumn<>(title);
 		column.setCellValueFactory(new PropertyValueFactory<>(property));
-		column.setMinWidth(150);
+		column.setMinWidth(200);
 		return column;
 	}
 
@@ -123,9 +122,17 @@ public class PurchaseHistoryPage implements EventHandler<ActionEvent> {
 	}
 
 	@Override
-	public void handle(ActionEvent arg0) {
-		// TODO Auto-generated method stub
-
+	public void handle(ActionEvent e) {
+		if (e.getSource() == wishlistItem) {
+			// Reload to wishlist page
+			view.Main.redirect(new WishlistPage().scene);
+		} else if (e.getSource() == homeItem) {
+			// Redirect to Home Page
+			view.Main.redirect(new BuyerDashboard().scene);
+		} else if (e.getSource() == purchaseItem) {
+			// Redirect to the Purchase History Page
+			view.Main.redirect(new PurchaseHistoryPage().scene);
+		}
 	}
 
 }

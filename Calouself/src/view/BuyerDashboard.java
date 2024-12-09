@@ -52,7 +52,8 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 		borderContainer.setCenter(homePane);
 		scrollContainer.setContent(borderContainer);
 
-		scene = new Scene(scrollContainer, 650, 400);
+		//scene = new Scene(scrollContainer, 650, 400);
+		scene = new Scene(scrollContainer, 800, 600);
 		view.Main.redirect(scene);
 	}
 
@@ -69,7 +70,6 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 	}
 
 	public void createMenuBar() {
-		// Corrected redundant additions
 		homeMenu.getItems().add(homeItem);
 		wishlistMenu.getItems().add(wishlistItem);
 		purchaseMenu.getItems().add(purchaseItem);
@@ -126,8 +126,8 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 		refreshHomeTable();
 
 		homePageItemsTable.getColumns().addAll(nameCol, categoryCol, sizeCol, priceCol, actionCol);
-		homePageItemsTable.setMaxWidth(600);
-		homePageItemsTable.setMinHeight(300);
+		homePageItemsTable.setMaxWidth(800);
+		homePageItemsTable.setMinHeight(500);
 		homePane.getChildren().add(welcomeLbl);
 		homePane.getChildren().add(titleHomeLbl);
 		homePane.getChildren().add(homePageItemsTable);
@@ -185,11 +185,11 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 			// Redirect to the WishlistPage
 			view.Main.redirect(new WishlistPage().scene);
 		} else if (e.getSource() == homeItem) {
-			// Existing code to handle Home Page redirection
 			borderContainer.setCenter(homePane);
 			scrollContainer.setContent(borderContainer);
 		} else if (e.getSource() == purchaseItem) {
-			// Handle "View Purchase History" menu item if needed
+			// Redirect to PurchaseHistoryPage
+			view.Main.redirect(new PurchaseHistoryPage().scene);
 		}
 	}
 }
