@@ -5,10 +5,13 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 import database.Connect;
+import javafx.util.Callback;
 import model.Item;
 
 public class ItemController {
 	private Connect connect = Connect.getInstance();
+	
+	
 	
 	public ArrayList<Item> getAcceptedItems(ArrayList<Item> items) {
 		String query = "SELECT * FROM item WHERE item.ItemStatus = ?";
@@ -296,4 +299,49 @@ public class ItemController {
 		}
 	    return "item edit successful!";
 	}
+	
+	//void untuk mengubah status item menjadi Approve
+	public void approveItem(String itemID) {
+	    String query = "UPDATE item SET ItemStatus = 'Approved' WHERE ItemID = ?";
+	    PreparedStatement prepQuery = connect.preparedStatement(query);
+	    
+	    try {
+	        prepQuery.setString(1, itemID);
+	        prepQuery.executeUpdate();
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	}
+
+
+	
+	//untuk get semua items baik yg sudah accepted ataupun belum accepted
+	public ArrayList<Item> getAllItems() {
+	    ArrayList<Item> items = new ArrayList<>();
+	    String query = "SELECT * FROM item";  // Ambil semua item
+	    PreparedStatement prepQuery = connect.preparedStatement(query);
+
+	    try {
+	        connect.rs = prepQuery.executeQuery();
+	        while (connect.rs.next()) {
+	            String id = connect.rs.getString("ItemID");
+	            String name = connect.rs.getString("Name");
+	            String category = connect.rs.getString("Category");
+	            String size = connect.rs.getString("Size");
+	            String price = connect.rs.getString("Price");
+	            String itemStatus = connect.rs.getString("ItemStatus");
+	            String itemWishlist = connect.rs.getString("ItemWishlist");
+	            String itemOfferStatus = connect.rs.getString("ItemOfferStatus");
+	            items.add(new Item(id, name, category, size, price, itemStatus, itemWishlist, itemOfferStatus));
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return items;
+	}
+
+
+	
+	
+	
 }

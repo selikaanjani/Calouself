@@ -120,8 +120,9 @@ public class LoginPage implements EventHandler<ActionEvent>{
 				String role = alert.get(1);
 				if (role.equals("Seller")) {
 					view.Main.redirect(new SellerDashboard().scene);
-				}
-				//else dia buyer
+				} else if (role.equals("Admin")) {
+	                view.Main.redirect(new AdminDashboard().scene);  // Arahkan ke AdminDashboard jika role-nya Admin
+	            }
 			} else {
 				showAlert("Login", alert.get(0));
 			}

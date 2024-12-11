@@ -53,7 +53,17 @@ public class UserController {
 		ArrayList<User> users = new ArrayList<>();
 		users = getUsers(users);
 //		String alert = "";
+		
 		ArrayList<String> temp = new ArrayList<String>();
+		
+		// Validasi untuk admin
+	    if (username.equals("admin") && password.equals("admin")) {
+	        currentlyLoggedInUser = new User("US000", "admin", "admin", "", "Admin Address", "Admin");
+	        temp.add("user login successful!");
+	        temp.add(currentlyLoggedInUser.getRole());
+	        return temp;
+	    }
+		
 		if (username.length() == 0) {
 			temp.add("username can't be empty!");
 			return temp;
@@ -81,6 +91,7 @@ public class UserController {
 		ArrayList<User> users = new ArrayList<>();
 		users = getUsers(users);
 		String alert = "";
+		
 		if (username.length() == 0) {
 			return "username can't be empty!";
 		}

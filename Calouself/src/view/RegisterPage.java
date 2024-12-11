@@ -35,7 +35,7 @@ public class RegisterPage implements EventHandler<ActionEvent> {
 	private PasswordField passwordPF;
 	private TextField phoneNumberTF;
 	private TextArea addressTA;
-	private RadioButton buyerRadio, sellerRadio;
+	private RadioButton buyerRadio, sellerRadio, adminRadio;
 	private ToggleGroup roleGroup;	
 	private Button registerBtn;
 	private UserController user_controller = new UserController();
@@ -62,18 +62,27 @@ public class RegisterPage implements EventHandler<ActionEvent> {
 		phoneNumberTF = new TextField();
 		addressTA = new TextArea();
 		roleGroup = new ToggleGroup();
+		
 		buyerRadio = new RadioButton("Buyer");
 		sellerRadio = new RadioButton("Seller");
+		//adminRadio = new RadioButton("Admin");
+		
 		buyerRadio.setToggleGroup(roleGroup);
 		sellerRadio.setToggleGroup(roleGroup);
+		//adminRadio.setToggleGroup(roleGroup);
+		
+		
+		
 		registerBtn = new Button("Register");
 		registerBtn.setOnAction(this); 
 		loginBtn.setOnAction(this);
+		
 	}
 	
 	private void initializeForm() {
 		flowContainer.getChildren().add(buyerRadio);
 		flowContainer.getChildren().add(sellerRadio);
+		//flowContainer.getChildren().add(adminRadio);
 		flowContainer.setHgap(10);
 		gridContainer.setHgap(10);
         gridContainer.setVgap(10);
