@@ -42,7 +42,6 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
     private String tempID; //to store the itemID on the mouse clicked event
 
     public SellerDashboard() {
-    	//constructor, when called it will switch to this scene
         initializeComponents();
         initializeMenuBar();
         initializeContentPanes();
@@ -337,7 +336,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 	private void refreshManageItemTable() {
 		//refresh/re-obtain table data
 		sellerAcceptedItems.removeAll(sellerAcceptedItems);
-		sellerAcceptedItems = item_controller.getSellerAcceptedItems(sellerAcceptedItems, user_controller.getCurrentlyLoggedInUser().getUserID());
+		sellerAcceptedItems = item_controller.getSellerHistoryItems(sellerAcceptedItems, user_controller.getCurrentlyLoggedInUser().getUserID());
 		ObservableList<Item> sellerAccItemsObs = FXCollections.observableArrayList(sellerAcceptedItems);
 		sellerAcceptedItemsTable.setItems(sellerAccItemsObs);
 	}
@@ -415,7 +414,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 				showAlert("Item Edit", alert);
 			}
         } else if (e.getSource() == viewAllItemsHistoryMenuItem) {
-        	//if user click view all items historu menu
+        	//if user click view all items history menu
         	borderContainer.setCenter(viewAllItemsHistoryPane);
         } else if (e.getSource() == deleteBtn) {
         	//if user click delete button

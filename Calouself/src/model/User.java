@@ -1,5 +1,11 @@
 package model;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.ArrayList;
+
+import database.Connect;
+
 public class User {
 //	UserID VARCHAR(255) NOT NULL PRIMARY KEY,
 //	 Username VARCHAR(255) NOT NULL,
@@ -14,7 +20,11 @@ public class User {
 	private String phoneNumber;
 	private String address;
 	private String role;
-	
+
+	public User() {
+		// default constructor
+	}
+
 	public User(String userID, String username, String password, String phoneNumber, String address, String role) {
 		super();
 		this.userID = userID;
@@ -72,8 +82,61 @@ public class User {
 	public void setRole(String role) {
 		this.role = role;
 	}
-	
-	
-	
+
+	// ACCESS TO DB
+	private Connect connect = Connect.getInstance();
+
+	public ArrayList<User> getUsers(ArrayList<User> users) {
+		// return all users from database
+		String query = "SELECT * FROM User";
+
+		PreparedStatement prepQuery = connect.preparedStatement(query);
+
+		try {
+			connect.rs = prepQuery.executeQuery();
+			while (connect.rs.next()) {
+				String id = connect.rs.getString("UserID");
+				String username = connect.rs.getString("Username");
+				String password = connect.rs.getString("Password");
+				String phoneNumber = connect.rs.getString("PhoneNumber");
+				String address = connect.rs.getString("Address");
+				String role = connect.rs.getString("Role");
+				users.add(new User(id, username, password, phoneNumber, address, role));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return users;
+	}
+
+	public String generateUserID() {
+		ArrayList<User> users = new ArrayList<>();
+		// mau bikin newID dgn format ID = US001
+		String lastID = users.isEmpty() ? "US000" : users.get(users.size() - 1).getUserID();
+		int numericPart = Integer.parseInt(lastID.substring(2));
+		String newID = String.format("US%03d", numericPart + 1);
+		return newID;
+	}
+
+	public String registerUser(String username, String password, String phoneNumber, String address, String role) {
+		String newID = generateUserID();
+		String query = "INSERT INTO User (UserID, Username, Password, PhoneNumber, Address, Role) "
+				+ "VALUES (?, ?, ?, ?, ?, ?)";
+		PreparedStatement prepQuery = connect.preparedStatement(query);
+
+		try {
+			prepQuery.setString(1, newID);
+			prepQuery.setString(2, username);
+			prepQuery.setString(3, password);
+			prepQuery.setString(4, phoneNumber);
+			prepQuery.setString(5, address);
+			prepQuery.setString(6, role);
+			prepQuery.executeUpdate();
+		} catch (SQLException e) {
+			return "error register user: " + e.getMessage();
+		}
+		return "User registration successful!";
+	}
+
 	
 }

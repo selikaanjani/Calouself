@@ -1,8 +1,10 @@
 package view;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 import controller.ItemController;
+import controller.TransactionController;
 import controller.UserController;
 import controller.WishlistController;
 import javafx.collections.FXCollections;
@@ -14,6 +16,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
@@ -24,6 +27,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import model.Item;
 
@@ -32,8 +36,8 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 	public Scene scene;
 	private BorderPane borderContainer;
 	private MenuBar menuBar;
-	private Menu homeMenu, wishlistMenu, purchaseMenu;
-	private MenuItem homeItem, wishlistItem, purchaseItem;
+	private Menu homeMenu, wishlistMenu, purchaseMenu, offerMenu;
+	private MenuItem homeItem, wishlistItem, purchaseItem, offerItem;
 	private VBox homePane;
 	private ScrollPane scrollContainer;
 	private Label titleHomeLbl, welcomeLbl;
@@ -42,6 +46,7 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 	private UserController user_controller = new UserController();
 	private ItemController item_controller = new ItemController();
 	private WishlistController wishlist_controller = new WishlistController();
+	private TransactionController transaction_controller = new TransactionController();
 
 	public BuyerDashboard() {
 		initializeComponents();
@@ -52,8 +57,8 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 		borderContainer.setCenter(homePane);
 		scrollContainer.setContent(borderContainer);
 
-		//scene = new Scene(scrollContainer, 650, 400);
-		scene = new Scene(scrollContainer, 800, 600);
+		// scene = new Scene(scrollContainer, 650, 400);
+		scene = new Scene(scrollContainer, 900, 600);
 		view.Main.redirect(scene);
 	}
 
@@ -66,6 +71,8 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 		wishlistItem = new MenuItem("View Wishlist");
 		purchaseMenu = new Menu("Purchase");
 		purchaseItem = new MenuItem("View Purchase History");
+		offerMenu = new Menu("Offer");
+		offerItem = new MenuItem("Make offer");
 		scrollContainer = new ScrollPane();
 	}
 
@@ -99,24 +106,34 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 		TableColumn<Item, String> sizeCol = createTableColumn("Size", "size");
 		TableColumn<Item, String> priceCol = createTableColumn("Price", "price");
 
-		// Actions column: Add to Wishlist
+		// Actions column: Add to Wishlist and Purchase
 		TableColumn<Item, Void> actionCol = new TableColumn<>("Actions");
-		actionCol.setMinWidth(150);
+		actionCol.setMinWidth(200);
 		actionCol.setCellFactory(param -> new TableCell<Item, Void>() {
 			private final Button addToWishlistBtn = new Button("Add to Wishlist");
+			private final Button purchaseBtn = new Button("Purchase");
+			private final HBox hbox = new HBox(10); 
 
 			{
 				addToWishlistBtn.setOnAction(event -> {
 					Item item = getTableView().getItems().get(getIndex());
 					addToWishlist(item);
 				});
+
+				purchaseBtn.setOnAction(event -> {
+					Item item = getTableView().getItems().get(getIndex());
+					purchaseItem(item);
+				});
+
+				hbox.getChildren().addAll(addToWishlistBtn, purchaseBtn);
+				hbox.setAlignment(Pos.CENTER);
 			}
 
 			@Override
 			protected void updateItem(Void item, boolean empty) {
 				super.updateItem(item, empty);
 				if (!empty) {
-					setGraphic(addToWishlistBtn);
+					setGraphic(hbox); // Set HBox yang berisi kedua tombol
 				} else {
 					setGraphic(null);
 				}
@@ -133,7 +150,7 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 		homePane.getChildren().add(homePageItemsTable);
 	}
 
-	//Method to create a TableColumn
+	// Method to create a TableColumn
 	private <T> TableColumn<Item, T> createTableColumn(String title, String property) {
 		TableColumn<Item, T> column = new TableColumn<>(title);
 		column.setCellValueFactory(new PropertyValueFactory<>(property));
@@ -158,6 +175,32 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 			showSuccess("Success", "Item successfully added to wishlist!");
 		} else {
 			showAlert("Failed", "Error adding item to wishlist");
+		}
+	}
+
+	private void purchaseItem(Item item) {
+		String userID = user_controller.getCurrentlyLoggedInUser().getUserID();
+		String itemID = item.getItemID();
+
+		// Confirmation pop up
+		Alert confirmationAlert = new Alert(Alert.AlertType.CONFIRMATION);
+		confirmationAlert.setTitle("Confirm Purchase");
+		confirmationAlert.setHeaderText("Are you sure you want to purchase " + item.getName() + "?");
+		confirmationAlert.setContentText("This action cannot be undone.");
+
+		ButtonType confirmButton = new ButtonType("Confirm");
+		ButtonType cancelButton = new ButtonType("Cancel");
+		confirmationAlert.getButtonTypes().setAll(confirmButton, cancelButton);
+
+		Optional<ButtonType> result = confirmationAlert.showAndWait();
+
+		if (result.get() == confirmButton) {
+			String isAdded = transaction_controller.purchasedItems(userID, itemID);
+			if (isAdded.equals("Transaction successful!")) {
+				showSuccess("Purchase Successful", "Item successfully purchased!");
+			} else {
+				showAlert("Purchase Failed", "Error initiating purchase. Please try again!");
+			}
 		}
 	}
 

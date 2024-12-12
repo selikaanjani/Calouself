@@ -8,30 +8,11 @@ import database.Connect;
 import model.User;
 
 public class UserController {
-	private Connect connect = Connect.getInstance();
+	private User userModel = new User();
 	private static User currentlyLoggedInUser; // static supaya yg diakses dari class" lain sama
 
 	public ArrayList<User> getUsers(ArrayList<User> users) {
-		// return all users from database
-		String query = "SELECT * FROM User";
-
-		PreparedStatement prepQuery = connect.preparedStatement(query);
-
-		try {
-			connect.rs = prepQuery.executeQuery();
-			while (connect.rs.next()) {
-				String id = connect.rs.getString("UserID");
-				String username = connect.rs.getString("Username");
-				String password = connect.rs.getString("Password");
-				String phoneNumber = connect.rs.getString("PhoneNumber");
-				String address = connect.rs.getString("Address");
-				String role = connect.rs.getString("Role");
-				users.add(new User(id, username, password, phoneNumber, address, role));
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return users;
+		return userModel.getUsers(users);
 	}
 
 	public ArrayList<String> loginUser(String username, String password) {
@@ -41,24 +22,24 @@ public class UserController {
 		ArrayList<User> users = new ArrayList<>();
 		users = getUsers(users);
 //		String alert = "";
-		
+
 		ArrayList<String> temp = new ArrayList<String>();
-		
+
 		// Validasi untuk admin
-	    if (username.equals("admin") && password.equals("admin")) {
-	        currentlyLoggedInUser = new User("US000", "admin", "admin", "", "Admin Address", "Admin");
-	        temp.add("user login successful!");
-	        temp.add(currentlyLoggedInUser.getRole());
-	        return temp;
-	    }
-		
+		if (username.equals("admin") && password.equals("admin")) {
+			currentlyLoggedInUser = new User("US000", "admin", "admin", "", "Admin Address", "Admin");
+			temp.add("User login successful!");
+			temp.add(currentlyLoggedInUser.getRole());
+			return temp;
+		}
+
 		if (username.length() == 0) {
-			temp.add("username can't be empty!");
+			temp.add("Username can't be empty!");
 			return temp;
 		}
 
 		if (password.length() == 0) {
-			temp.add("password can't be empty!");
+			temp.add("Password can't be empty!");
 			return temp;
 		}
 
@@ -66,13 +47,13 @@ public class UserController {
 			if (user.getUsername().equals(username) && user.getPassword().equals(password)) {
 				// login success
 				currentlyLoggedInUser = user;
-				temp.add("user login successful!");
+				temp.add("User login successful!");
 				temp.add(user.getRole());
 				return temp;
 			}
 		}
 		// login failure
-		temp.add("user not found!");
+		temp.add("User not found!");
 		return temp;
 	}
 
@@ -82,7 +63,7 @@ public class UserController {
 		ArrayList<User> users = new ArrayList<>();
 		users = getUsers(users);
 		String alert = "";
-		
+
 		if (username.length() == 0) {
 			return "username can't be empty!";
 		}
@@ -135,32 +116,9 @@ public class UserController {
 		}
 		// udah slsi validasi
 
-		// mau bikin newID dgn format ID = US001
-		String lastID = users.isEmpty() ? "US000" : users.get(users.size() - 1).getUserID();
-		int numericPart = Integer.parseInt(lastID.substring(2));
-		String newID = String.format("US%03d", numericPart + 1);
-
 		// do insert user
-		String query = "INSERT INTO User (UserID, Username, Password, PhoneNumber, Address, Role) "
-				+ "VALUES (?, ?, ?, ?, ?, ?)";
-		PreparedStatement prepQuery = connect.preparedStatement(query);
-
-		try {
-			prepQuery.setString(1, newID);
-			prepQuery.setString(2, username);
-			prepQuery.setString(3, password);
-			prepQuery.setString(4, phoneNumber);
-			prepQuery.setString(5, address);
-			prepQuery.setString(6, role);
-			prepQuery.executeUpdate();
-		} catch (SQLException e) {
-			return "error register user: " + e.getMessage();
-		}
-
-//		String query = "INSERT INTO User " + "VALUES ('"+ newID +"', '"+ username +"', '"+ password +"', '"+ phoneNumber +"', '"+ address +"', '"+ role +"')";
-//		connect.execUpdate(query);
-		alert = "user registration successful!";
-
+		userModel.registerUser(username, password, phoneNumber, address, role);
+		alert = "User registration successful!";
 		return alert;
 	}
 

@@ -23,6 +23,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import model.Item;
 
@@ -45,12 +46,11 @@ public class WishlistPage implements EventHandler<ActionEvent> {
 		createMenuBar();
 		initializeContentPanes();
 
-		// Default content: Home Page
+		// Default content: Wishlist Page
 		borderContainer.setCenter(homePane);
 		scrollContainer.setContent(borderContainer);
 
-		// scene = new Scene(scrollContainer, 650, 400);
-		scene = new Scene(scrollContainer, 800, 600);
+		scene = new Scene(scrollContainer, 900, 600);
 		view.Main.redirect(scene);
 	}
 
@@ -92,19 +92,19 @@ public class WishlistPage implements EventHandler<ActionEvent> {
 
 		// Table showing items with actions
 		wishlistTable = new TableView<>();
-		TableColumn<Item, String> nameCol = new TableColumn("Name");
+		TableColumn<Item, String> nameCol = new TableColumn<>("Name");
 		nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
 		nameCol.setMinWidth(150);
 
-		TableColumn<Item, Integer> categoryCol = new TableColumn("Category");
+		TableColumn<Item, Integer> categoryCol = new TableColumn<>("Category");
 		categoryCol.setCellValueFactory(new PropertyValueFactory<>("category"));
 		categoryCol.setMinWidth(150);
 
-		TableColumn<Item, String> sizeCol = new TableColumn("Size");
+		TableColumn<Item, String> sizeCol = new TableColumn<>("Size");
 		sizeCol.setCellValueFactory(new PropertyValueFactory<>("size"));
 		sizeCol.setMinWidth(150);
 
-		TableColumn<Item, String> priceCol = new TableColumn("Price");
+		TableColumn<Item, String> priceCol = new TableColumn<>("Price");
 		priceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
 		priceCol.setMinWidth(150);
 
@@ -147,7 +147,6 @@ public class WishlistPage implements EventHandler<ActionEvent> {
 
 		ObservableList<Item> wishlistObs = FXCollections.observableArrayList(wishlistItems);
 		wishlistTable.setItems(wishlistObs);
-
 	}
 
 	private void removeFromWishlist(Item item) {
@@ -159,13 +158,19 @@ public class WishlistPage implements EventHandler<ActionEvent> {
 			String result = wishlist_controller.removeItemFromWishlist(wishlistID);
 			if (result.startsWith("Item successfully removed")) {
 				showSuccess("Success", result);
-				refreshWishlistTable(); // Refresh the table view after removal
+				removeItemFromTable(item); // Call removeItemFromTable again
 			} else {
 				showAlert("Error", "Failed to remove the item from the wishlist.");
 			}
 		} else {
 			showAlert("Error", "Wishlist entry not found for the selected item.");
 		}
+	}
+
+	private void removeItemFromTable(Item item) {
+		ObservableList<Item> wishlistItems = wishlistTable.getItems();
+		wishlistItems.remove(item);
+		wishlistTable.setItems(wishlistItems);
 	}
 
 	private void showSuccess(String title, String message) {
@@ -187,15 +192,11 @@ public class WishlistPage implements EventHandler<ActionEvent> {
 	@Override
 	public void handle(ActionEvent e) {
 		if (e.getSource() == wishlistItem) {
-			// Reload wishlist page
 			view.Main.redirect(new WishlistPage().scene);
 		} else if (e.getSource() == homeItem) {
-			// Redirect to the home
 			view.Main.redirect(new BuyerDashboard().scene);
 		} else if (e.getSource() == purchaseItem) {
-			// Redirect to the Purchase History Page
 			view.Main.redirect(new PurchaseHistoryPage().scene);
 		}
-
 	}
 }
