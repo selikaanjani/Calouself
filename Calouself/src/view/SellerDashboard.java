@@ -1,9 +1,12 @@
 package view;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import controller.ItemController;
+import controller.TransactionController;
 import controller.UserController;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -16,13 +19,15 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import model.Item;
+import model.Offer;
 
 public class SellerDashboard implements EventHandler<ActionEvent> {
 	public Scene scene;
 	private BorderPane borderContainer;
 	private MenuBar menuBar;
 	private Menu homeMenu, itemsMenu;
-	private MenuItem homeMenuItem, manageItemsMenuItem, uploadItemMenuItem, viewAllItemsHistoryMenuItem;
+	private MenuItem homeMenuItem, manageItemsMenuItem, uploadItemMenuItem, viewAllItemsHistoryMenuItem,
+			viewOfferedItem;
 	private VBox homePane, manageItemsPane, uploadItemPane, viewAllItemsHistoryPane;
 	private TableView<Item> homePageItemsTable, sellerAcceptedItemsTable, historyItemsTable;
 	private Label titleHomeLbl, titleManageItemLbl, titleUploadItemLbl, titleViewAllItemsHistoryLbl;
@@ -40,11 +45,16 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 	private ArrayList<Item> sellerAcceptedItems = new ArrayList<>();
 	private ArrayList<Item> sellerHistoryItems = new ArrayList<>();
 	private String tempID; // to store the itemID on the mouse clicked event
+	private VBox viewOfferedItemsPane;
+	private TableView<Offer> offeredItemsTable;
+	private Button acceptBtn, declineBtn;
+	private TransactionController transaction_controller = new TransactionController();
 
 	public SellerDashboard() {
 		initializeComponents();
 		initializeMenuBar();
 		initializeContentPanes();
+		initializeViewOfferedItemsPane();
 
 		// Default content: home pane
 		borderContainer.setCenter(homePane);
@@ -65,6 +75,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 		manageItemsMenuItem = new MenuItem("Manage Items");
 		uploadItemMenuItem = new MenuItem("Upload New Item");
 		viewAllItemsHistoryMenuItem = new MenuItem("View All Items History");
+		viewOfferedItem = new MenuItem("View offered item");
 	}
 
 	private void initializeMenuBar() {
@@ -73,11 +84,13 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 		manageItemsMenuItem.setOnAction(this);
 		uploadItemMenuItem.setOnAction(this);
 		viewAllItemsHistoryMenuItem.setOnAction(this);
+		viewOfferedItem.setOnAction(this);
 
 		homeMenu.getItems().add(homeMenuItem);
 		itemsMenu.getItems().add(manageItemsMenuItem);
 		itemsMenu.getItems().add(uploadItemMenuItem);
 		itemsMenu.getItems().add(viewAllItemsHistoryMenuItem);
+		itemsMenu.getItems().add(viewOfferedItem);
 
 		menuBar.getMenus().addAll(homeMenu, itemsMenu);
 		borderContainer.setTop(menuBar);
@@ -110,7 +123,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 		priceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
 		priceCol.setMinWidth(150);
 
-		refreshHomeTable(); 
+		refreshHomeTable();
 
 		homePageItemsTable.getColumns().addAll(nameCol, categoryCol, sizeCol, priceCol);
 		homePageItemsTable.setMaxWidth(800);
@@ -119,7 +132,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 		homePane.getChildren().add(titleHomeLbl);
 		homePane.getChildren().add(homePageItemsTable);
 
-		// initialzie manage items pane
+		// initialize manage items pane
 		welcomeLbl2 = new Label("Welcome Seller " + user_controller.getCurrentlyLoggedInUser().getUsername() + "!");
 		welcomeLbl2.setStyle("-fx-font-weight: bold;");
 
@@ -283,6 +296,90 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 
 	}
 
+	private void initializeViewOfferedItemsPane() {
+		viewOfferedItemsPane = new VBox(10);
+		viewOfferedItemsPane.setPadding(new Insets(20));
+		viewOfferedItemsPane.setAlignment(Pos.CENTER);
+
+		Label titleViewOfferedItemsLbl = new Label("View Offered Items");
+		titleViewOfferedItemsLbl.setStyle("-fx-font-weight: bold;");
+
+		offeredItemsTable = new TableView<>();
+		TableColumn<Offer, String> nameCol = new TableColumn<>("Name");
+		nameCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getItem().getName()));
+
+		TableColumn<Offer, String> categoryCol = new TableColumn<>("Category");
+		categoryCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getItem().getCategory()));
+
+		TableColumn<Offer, String> sizeCol = new TableColumn<>("Size");
+		sizeCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getItem().getSize()));
+
+		TableColumn<Offer, String> initialPriceCol = new TableColumn<>("Initial Price");
+		initialPriceCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getItem().getPrice()));
+
+		TableColumn<Offer, String> offeredPriceCol = new TableColumn<>("Offered Price");
+		offeredPriceCol.setCellValueFactory(new PropertyValueFactory<>("offeredPrice"));
+
+		TableColumn<Offer, Void> actionCol = new TableColumn<>("Actions");
+		actionCol.setCellFactory(col -> new TableCell<Offer, Void>() {
+			private final Button acceptButton = new Button("Accept");
+			private final Button declineButton = new Button("Decline");
+
+			{
+				acceptButton.setOnAction(e -> {
+					Offer selectedOffer = getTableRow().getItem();
+					if (selectedOffer != null) {
+						String itemID = selectedOffer.getItem().getItemID();
+						String result = item_controller.acceptOffer(itemID);
+						System.out.println(result);
+						refreshOfferedItemsTable();
+					}
+				});
+
+				declineButton.setOnAction(e -> {
+					Offer selectedOffer = getTableRow().getItem();
+					if (selectedOffer != null) {
+						String itemID = selectedOffer.getItem().getItemID();
+						String result = item_controller.declineOffer(itemID);
+						System.out.println(result);
+						refreshOfferedItemsTable();
+					}
+				});
+			}
+
+			@Override
+			public void updateItem(Void item, boolean empty) {
+				super.updateItem(item, empty);
+				if (!empty) {
+					HBox actionBox = new HBox(10, acceptButton, declineButton);
+					setGraphic(actionBox);
+				} else {
+					setGraphic(null);
+				}
+			}
+		});
+
+		offeredItemsTable.getColumns().addAll(nameCol, categoryCol, sizeCol, initialPriceCol, offeredPriceCol,
+				actionCol);
+		offeredItemsTable.setMaxWidth(800);
+		offeredItemsTable.setMinHeight(400);
+
+		viewOfferedItemsPane.getChildren().addAll(titleViewOfferedItemsLbl, offeredItemsTable);
+
+		// Refresh the table data
+		refreshOfferedItemsTable();
+	}
+
+	private void refreshOfferedItemsTable() {
+		List<Offer> offeredItems = item_controller.getOfferedItems();
+		if (offeredItems != null && !offeredItems.isEmpty()) {
+			ObservableList<Offer> items = FXCollections.observableArrayList(offeredItems);
+			offeredItemsTable.setItems(items);
+		} else {
+			System.out.println("No offered items found.");
+		}
+	}
+
 	private void showAlert(String title, String message) {
 		// show error alert
 		Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -436,6 +533,8 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 				// delete failure
 				showAlert("Item Delete", alert);
 			}
+		} else if (e.getSource() == viewOfferedItem) {
+			borderContainer.setCenter(viewOfferedItemsPane);
 		}
 	}
 }

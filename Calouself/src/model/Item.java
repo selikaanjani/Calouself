@@ -3,6 +3,9 @@ package model;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
+
+import javax.management.loading.PrivateClassLoader;
 
 import controller.ItemController;
 import database.Connect;
@@ -60,6 +63,14 @@ public class Item {
 		this.itemStatus = itemStatus;
 		// itemwishlist krg tau apa, itemofferstatus klo baru create krna emg blm ada
 		// offer jdi kosong dlu
+	}
+	
+	public Item(String itemID, String name, String category, String size) {
+		super();
+		this.itemID = itemID;
+		this.name = name;
+		this.category = category;
+		this.size = size;
 	}
 
 	public Item() {
@@ -132,6 +143,131 @@ public class Item {
 
 	// ACCESS TO DB
 	private Connect connect = Connect.getInstance();
+
+//	public String acceptOffer(String itemID) {
+//		Transaction tr = new Transaction();
+//		User user = new User();
+//		String userID = user.getUserID();
+//		String transactionID = tr.generateTransactionID();
+//		tr.createTransaction(transactionID, userID, itemID);
+//		return itemID;
+//	}
+
+	public String acceptOffer(String itemID) {
+		Transaction tr = new Transaction();
+		User user = new User();
+		String userID = user.getUserID();
+		String transactionID = tr.generateTransactionID();
+		tr.createTransaction(transactionID, userID, itemID);
+		return "Offer for item " + itemID + " has been accepted.";
+	}
+
+	public String declineOffer(String itemID) {
+		String query = "DELETE FROM Offer WHERE ItemID = ?";
+
+		try (PreparedStatement stmt = connect.preparedStatement(query)) {
+			stmt.setString(1, itemID);
+
+			int rowsAffected = stmt.executeUpdate();
+
+			if (rowsAffected > 0) {
+				System.out.println("Offer for item " + itemID + " has been declined.");
+				return "Offer for item " + itemID + " has been declined.";
+			} else {
+				System.out.println("No offer found for item " + itemID);
+				return "No offer found for item " + itemID;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return "Error: Unable to decline offer for item " + itemID;
+		}
+	}
+
+	public List<Offer> getOfferedItems() {
+		String query = "SELECT o.offerID, o.userID, o.itemID, o.offerPrice, i.name, i.category, i.size "
+				+ "FROM Offer o " + "JOIN Item i ON o.itemID = i.itemID";
+
+		List<Offer> offers = new ArrayList<>();
+
+		try (PreparedStatement stmt = connect.preparedStatement(query)) {
+
+			while (connect.rs.next()) {
+				String offerID = connect.rs.getString("offerID");
+				String userID = connect.rs.getString("userID");
+				String itemID = connect.rs.getString("itemID");
+				String offerPrice = connect.rs.getString("offerPrice");
+				String name = connect.rs.getString("name");
+				String category = connect.rs.getString("category");
+				String size = connect.rs.getString("size");
+
+				Item item = new Item(itemID, name, category, size);
+				Offer offer = new Offer(offerID, userID, itemID, offerPrice);
+
+				offers.add(offer);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return offers;
+	}
+
+	public String highestOffer(String itemID) {
+		String currentHighestOfferQuery = "SELECT MAX(OfferPrice) FROM Offer WHERE ItemID = ?";
+		String currentHighestOffer = "0";
+		try (PreparedStatement stmt = connect.preparedStatement(currentHighestOfferQuery)) {
+			stmt.setString(1, itemID);
+			connect.rs = stmt.executeQuery();
+			if (connect.rs.next()) {
+				currentHighestOffer = String.valueOf(connect.rs.getDouble(1));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return "Error fetching the highest offer price.";
+		}
+		return currentHighestOffer;
+	}
+
+	public String offerPrice(String itemID, String userID, String offerPrice) {
+		String offerID = "";
+		String query = "SELECT MAX(OfferID) FROM Offer";
+
+		try (PreparedStatement prepQuery = connect.preparedStatement(query)) {
+			connect.rs = prepQuery.executeQuery();
+
+			if (connect.rs.next()) {
+				String lastOfferID = connect.rs.getString(1);
+				// generate offer id
+				if (lastOfferID != null) {
+					int lastNumber = Integer.parseInt(lastOfferID.substring(2));
+					offerID = String.format("OF%03d", lastNumber + 1);
+				} else {
+					offerID = "OF001";
+				}
+			}
+
+			String insertQuery = "INSERT INTO Offer (OfferID, ItemID, UserID, OfferPrice) VALUES (?, ?, ?, ?)";
+			try (PreparedStatement insertStmt = connect.preparedStatement(insertQuery)) {
+				insertStmt.setString(1, offerID);
+				insertStmt.setString(2, itemID);
+				insertStmt.setString(3, userID);
+				insertStmt.setString(4, offerPrice);
+				int rowsAffected = insertStmt.executeUpdate();
+				if (rowsAffected > 0) {
+					System.out.println("Offer submitted successfully with OfferID: " + offerID);
+					return "success";
+				} else {
+					System.out.println("Failed to submit the offer.");
+					return "error";
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+				return "Error while inserting the offer.";
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return "Error while retrieving the last OfferID.";
+		}
+	}
 
 	public Item getItemById(String itemID) {
 		String query = "SELECT * FROM Item WHERE ItemID = ?";
@@ -214,8 +350,6 @@ public class Item {
 	}
 
 	public String deleteItem(String itemID) {
-		// delete item
-		// return string alert
 		String query = "DELETE FROM item WHERE ItemID = ?";
 		PreparedStatement prepQuery = connect.preparedStatement(query);
 
@@ -233,7 +367,6 @@ public class Item {
 	}
 
 	public ArrayList<Item> getSellerHistoryItems(ArrayList<Item> items, String userID) {
-		// return all items of a specific seller, doesn't do any sorting
 		String query = "SELECT * FROM item WHERE item.USERID = ?";
 
 		PreparedStatement prepQuery = connect.preparedStatement(query);

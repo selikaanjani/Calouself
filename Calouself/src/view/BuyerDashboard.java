@@ -36,8 +36,8 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 	public Scene scene;
 	private BorderPane borderContainer;
 	private MenuBar menuBar;
-	private Menu homeMenu, wishlistMenu, purchaseMenu, offerMenu;
-	private MenuItem homeItem, wishlistItem, purchaseItem, offerItem;
+	private Menu homeMenu, wishlistMenu, purchaseMenu;
+	private MenuItem homeItem, wishlistItem, purchaseItem;
 	private VBox homePane;
 	private ScrollPane scrollContainer;
 	private Label titleHomeLbl, welcomeLbl;
@@ -71,8 +71,6 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 		wishlistItem = new MenuItem("View Wishlist");
 		purchaseMenu = new Menu("Purchase");
 		purchaseItem = new MenuItem("View Purchase History");
-		offerMenu = new Menu("Offer");
-		offerItem = new MenuItem("Make offer");
 		scrollContainer = new ScrollPane();
 	}
 
@@ -106,12 +104,13 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 		TableColumn<Item, String> sizeCol = createTableColumn("Size", "size");
 		TableColumn<Item, String> priceCol = createTableColumn("Price", "price");
 
-		// Actions column: Add to Wishlist and Purchase
+		// Actions column: Add to Wishlist, Purchase, make offer
 		TableColumn<Item, Void> actionCol = new TableColumn<>("Actions");
-		actionCol.setMinWidth(200);
+		actionCol.setMinWidth(300);
 		actionCol.setCellFactory(param -> new TableCell<Item, Void>() {
 			private final Button addToWishlistBtn = new Button("Add to Wishlist");
 			private final Button purchaseBtn = new Button("Purchase");
+			private final Button makeOfferBtn = new Button("Make Offer");
 			private final HBox hbox = new HBox(10);
 
 			{
@@ -124,8 +123,14 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 					Item item = getTableView().getItems().get(getIndex());
 					purchaseItem(item);
 				});
+				
+				makeOfferBtn.setOnAction(event -> {
+		            Item item = getTableView().getItems().get(getIndex());
+		            view.Main.redirect(new MakeOfferPage(item).scene);
+		        });
 
-				hbox.getChildren().addAll(addToWishlistBtn, purchaseBtn);
+
+				hbox.getChildren().addAll(addToWishlistBtn, purchaseBtn, makeOfferBtn);
 				hbox.setAlignment(Pos.CENTER);
 			}
 
@@ -133,7 +138,7 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 			protected void updateItem(Void item, boolean empty) {
 				super.updateItem(item, empty);
 				if (!empty) {
-					setGraphic(hbox); // Set HBox yang berisi kedua tombol
+					setGraphic(hbox); 
 				} else {
 					setGraphic(null);
 				}

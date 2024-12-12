@@ -39,7 +39,6 @@ public class PurchaseHistoryPage implements EventHandler<ActionEvent> {
 	private ScrollPane scrollContainer;
 	private Label titleHomeLbl, welcomeLbl;
 	private TableView<Item> homePageItemsTable;
-	private ArrayList<Item> acceptedItems = new ArrayList<>();
 	private UserController user_controller = new UserController();
 	private ItemController item_controller = new ItemController();
 	private TransactionController transaction_controller = new TransactionController();

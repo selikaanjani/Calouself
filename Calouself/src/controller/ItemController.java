@@ -1,14 +1,42 @@
 package controller;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 import model.Item;
+import model.Offer;
 
 public class ItemController {
 	private Item itemModel = new Item();
 	
+	public String acceptOffer(String itemID) {
+		return itemModel.acceptOffer(itemID);
+	}
+	
+	public String declineOffer(String itemID) {
+		return itemModel.declineOffer(itemID);
+	}
+	
+	public List<Offer> getOfferedItems() {
+		return itemModel.getOfferedItems();
+	}
+
+	public String offerPrice(String itemID, String userID, String offerPrice) {
+		String highOffer = itemModel.highestOffer(itemID);
+		double parsedOfferPrice = Double.parseDouble(offerPrice);
+		double parsedHighestPrice = Double.parseDouble(highOffer);
+		// validasi
+		if (offerPrice.isEmpty()) {
+			return "Price can't be empty";
+		} else if (parsedOfferPrice <= 0) {
+			return "Offer price must be more than 0";
+		} else if (parsedOfferPrice <= parsedHighestPrice) {
+			return "Offer price must be higher than current highest price";
+		}
+		offerPrice = String.valueOf(parsedOfferPrice);
+		return itemModel.offerPrice(itemID, userID, offerPrice);
+	}
+
 	public Item getItemById(String itemID) {
 		return itemModel.getItemById(itemID);
 	}
@@ -110,22 +138,21 @@ public class ItemController {
 	public ArrayList<Item> getAcceptedItems(ArrayList<Item> items) {
 		return itemModel.getAcceptedItems(items);
 	}
-	
+
 	public String deleteItem(String itemID) {
 		return itemModel.deleteItem(itemID);
 	}
-	
-	public ArrayList<Item> getAllItems(){
+
+	public ArrayList<Item> getAllItems() {
 		return itemModel.getAllItems();
 	}
-	
-	public ArrayList<Item> getSellerAcceptedItems(ArrayList<Item> items, String userID){
+
+	public ArrayList<Item> getSellerAcceptedItems(ArrayList<Item> items, String userID) {
 		return itemModel.getSellerAcceptedItems(items, userID);
 	}
-	
-	public ArrayList<Item> getSellerHistoryItems(ArrayList<Item> items, String userID){
+
+	public ArrayList<Item> getSellerHistoryItems(ArrayList<Item> items, String userID) {
 		return itemModel.getSellerHistoryItems(items, userID);
 	}
-	
-	
+
 }
