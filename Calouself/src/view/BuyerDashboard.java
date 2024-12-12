@@ -112,7 +112,7 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 		actionCol.setCellFactory(param -> new TableCell<Item, Void>() {
 			private final Button addToWishlistBtn = new Button("Add to Wishlist");
 			private final Button purchaseBtn = new Button("Purchase");
-			private final HBox hbox = new HBox(10); 
+			private final HBox hbox = new HBox(10);
 
 			{
 				addToWishlistBtn.setOnAction(event -> {
@@ -181,6 +181,7 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 	private void purchaseItem(Item item) {
 		String userID = user_controller.getCurrentlyLoggedInUser().getUserID();
 		String itemID = item.getItemID();
+		String transactionID = transaction_controller.generateTransactionID();
 
 		// Confirmation pop up
 		Alert confirmationAlert = new Alert(Alert.AlertType.CONFIRMATION);
@@ -194,14 +195,16 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 
 		Optional<ButtonType> result = confirmationAlert.showAndWait();
 
-		if (result.get() == confirmButton) {
-			String isAdded = transaction_controller.purchasedItems(userID, itemID);
-			if (isAdded.equals("Transaction successful!")) {
+		if (result.isPresent() && result.get() == confirmButton) {
+			String isAdded = transaction_controller.createTransaction(transactionID, userID, itemID);
+			if (isAdded.contains("Transaction successful")) {
 				showSuccess("Purchase Successful", "Item successfully purchased!");
 			} else {
-				showAlert("Purchase Failed", "Error initiating purchase. Please try again!");
+				showAlert("Purchase Failed", isAdded);
 			}
+
 		}
+
 	}
 
 	private void showSuccess(String title, String message) {

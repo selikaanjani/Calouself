@@ -2,16 +2,19 @@ package model;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 import database.Connect;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 public class Transaction {
 	private String transactionID;
 	private String userID;
 	private String itemID;
-	
+
 	public Transaction() {
-		//default constructor
+		// default constructor
 	}
 
 	public Transaction(String transactionID, String userID, String itemID) {
@@ -48,8 +51,8 @@ public class Transaction {
 	// ACCESS TO DB
 	private Connect connect = Connect.getInstance();
 
-	public String purchasedItems(String userID, String itemID) {
-		// Generate new Transaction ID with format TR001
+	public String generateTransactionID() {
+		// You can use your existing code to generate a new transaction ID
 		String queryID = "SELECT MAX(TransactionID) AS lastID FROM Transaction";
 		String lastID = "TR000";
 
@@ -59,30 +62,68 @@ public class Transaction {
 				lastID = connect.rs.getString("lastID");
 			}
 		} catch (SQLException e) {
-			return "Error fetching last Transaction ID: " + e.getMessage();
+			return null;
 		}
 
-		// Generate the new ID for the transaction
 		int numericPart = Integer.parseInt(lastID.substring(2));
-		String newID = String.format("TR%03d", numericPart + 1);
-
-		// Insert into the database
-		String query = "INSERT INTO Transaction (TransactionID, UserID, ItemID) VALUES (?, ?, ?)";
-		try (PreparedStatement prepQuery = connect.preparedStatement(query)) {
-			prepQuery.setString(1, newID);
-			prepQuery.setString(2, userID);
-			prepQuery.setString(3, itemID);
-			int rowsAffected = prepQuery.executeUpdate();
-			if (rowsAffected > 0) {
-				return "Item successfully added to transaction!";
-			} else {
-				return "Error adding item to transaction!";
-			}
-		} catch (SQLException e) {
-			return "Error adding item to transaction: " + e.getMessage();
-		}
+		return String.format("TR%03d", numericPart + 1);
 	}
 
-	
-	
+	public String createTransaction(String transactionID, String userID, String itemID) {
+		if (transactionID == null || userID == null || itemID == null) {
+			return "Error: Invalid transaction details!";
+		}
+
+		String insertQuery = "INSERT INTO Transaction (TransactionID, UserID, ItemID) VALUES (?, ?, ?)";
+		String deleteWishlistQuery = "DELETE FROM Wishlist WHERE UserID = ? AND ItemID = ?";
+
+		try (PreparedStatement prepQuery = connect.preparedStatement(insertQuery)) {
+			prepQuery.setString(1, transactionID);
+			prepQuery.setString(2, userID);
+			prepQuery.setString(3, itemID);
+
+			int rowsAffected = prepQuery.executeUpdate();
+
+			if (rowsAffected > 0) {
+				// Hapus item dari wishlist
+				try (PreparedStatement deleteQuery = connect.preparedStatement(deleteWishlistQuery)) {
+					deleteQuery.setString(1, userID);
+					deleteQuery.setString(2, itemID);
+					int wishlistRowsAffected = deleteQuery.executeUpdate();
+
+					if (wishlistRowsAffected > 0) {
+						return "Transaction successful and item removed from wishlist!";
+					} else {
+						return "Transaction successful, but item not found in wishlist.";
+					}
+				}
+			}
+		} catch (SQLException e) {
+			return "Error adding transaction: " + e.getMessage();
+		}
+
+		return "Unknown error occurred!";
+	}
+
+	public ObservableList<Transaction> viewHistory(String userID) {
+		String query = "SELECT t.TransactionID, t.ItemID FROM Transaction t WHERE t.UserID = ?";
+		ObservableList<Transaction> transactionHistory = FXCollections.observableArrayList();
+
+		try (PreparedStatement prepQuery = connect.preparedStatement(query)) {
+			prepQuery.setString(1, userID);
+			connect.rs = prepQuery.executeQuery();
+
+			while (connect.rs.next()) {
+				String transactionID = connect.rs.getString("TransactionID");
+				String itemID = connect.rs.getString("ItemID");
+				Transaction transaction = new Transaction(transactionID, userID, itemID);
+				transactionHistory.add(transaction);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return transactionHistory;
+	}
+
 }

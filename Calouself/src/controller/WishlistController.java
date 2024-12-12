@@ -20,7 +20,7 @@ public class WishlistController {
 	}
 
 	public String getWishlistID(String userID, String itemID) {
-		return wishlistModel.getWishlistID();
+		return wishlistModel.getWishlistID(userID, itemID);
 	}
 
 	public ArrayList<Item> viewWishlist(String userID) {

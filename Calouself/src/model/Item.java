@@ -27,6 +27,15 @@ public class Item {
 	private String itemStatus;
 	private String itemWishlist;
 	private String itemOfferStatus;
+	private String transactionID;
+
+	public String getTransactionID() {
+		return transactionID;
+	}
+
+	public void setTransactionID(String transactionID) {
+		this.transactionID = transactionID;
+	}
 
 	public Item(String itemID, String name, String category, String size, String price, String itemStatus,
 			String itemWishlist, String itemOfferStatus) {
@@ -123,6 +132,27 @@ public class Item {
 
 	// ACCESS TO DB
 	private Connect connect = Connect.getInstance();
+
+	public Item getItemById(String itemID) {
+		String query = "SELECT * FROM Item WHERE ItemID = ?";
+		try (PreparedStatement prepQuery = connect.preparedStatement(query)) {
+			prepQuery.setString(1, itemID);
+			connect.rs = prepQuery.executeQuery();
+
+			if (connect.rs.next()) {
+				String name = connect.rs.getString("Name");
+				String category = connect.rs.getString("Category");
+				String size = connect.rs.getString("Size");
+				String price = connect.rs.getString("Price");
+				String itemStatus = connect.rs.getString("ItemStatus");
+
+				return new Item(itemID, name, category, size, price, itemStatus);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 
 	public ArrayList<Item> getAcceptedItems(ArrayList<Item> items) {
 		// return all items that have been accepted by admin

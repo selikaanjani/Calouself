@@ -3,6 +3,7 @@ package view;
 import java.util.ArrayList;
 
 import controller.ItemController;
+import controller.TransactionController;
 import controller.UserController;
 import controller.WishlistController;
 import javafx.collections.FXCollections;
@@ -25,6 +26,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import model.Item;
+import model.Transaction;
 
 public class PurchaseHistoryPage implements EventHandler<ActionEvent> {
 
@@ -40,6 +42,7 @@ public class PurchaseHistoryPage implements EventHandler<ActionEvent> {
 	private ArrayList<Item> acceptedItems = new ArrayList<>();
 	private UserController user_controller = new UserController();
 	private ItemController item_controller = new ItemController();
+	private TransactionController transaction_controller = new TransactionController();
 
 	public PurchaseHistoryPage() {
 		initializeComponents();
@@ -51,7 +54,7 @@ public class PurchaseHistoryPage implements EventHandler<ActionEvent> {
 		scrollContainer.setContent(borderContainer);
 
 		// scene = new Scene(scrollContainer, 650, 400);
-		scene = new Scene(scrollContainer, 800, 600);
+		scene = new Scene(scrollContainer, 900, 600);
 		view.Main.redirect(scene);
 	}
 
@@ -92,14 +95,15 @@ public class PurchaseHistoryPage implements EventHandler<ActionEvent> {
 
 		// Table displaying items
 		homePageItemsTable = new TableView<>();
+		TableColumn<Item, String> transactionIDCol = createTableColumn("Transaction ID", "transactionID");
 		TableColumn<Item, String> nameCol = createTableColumn("Name", "name");
-		TableColumn<Item, Integer> categoryCol = createTableColumn("Category", "category");
+		TableColumn<Item, String> categoryCol = createTableColumn("Category", "category");
 		TableColumn<Item, String> sizeCol = createTableColumn("Size", "size");
 		TableColumn<Item, String> priceCol = createTableColumn("Price", "price");
 
-		refreshHomeTable();
+		refreshPurchaseTable();
 
-		homePageItemsTable.getColumns().addAll(nameCol, categoryCol, sizeCol, priceCol);
+		homePageItemsTable.getColumns().addAll(transactionIDCol, nameCol, categoryCol, sizeCol, priceCol);
 		homePageItemsTable.setMaxWidth(800);
 		homePageItemsTable.setMinHeight(500);
 		homePane.getChildren().add(welcomeLbl);
@@ -114,11 +118,25 @@ public class PurchaseHistoryPage implements EventHandler<ActionEvent> {
 		return column;
 	}
 
-	private void refreshHomeTable() {
-		acceptedItems.removeAll(acceptedItems);
-		acceptedItems = item_controller.getAcceptedItems(acceptedItems);
-		ObservableList<Item> accItemsObs = FXCollections.observableArrayList(acceptedItems);
-		homePageItemsTable.setItems(accItemsObs);
+	private void refreshPurchaseTable() {
+		homePageItemsTable.getItems().clear();
+		String userID = user_controller.getCurrentlyLoggedInUser().getUserID();
+		ObservableList<Transaction> transactions = transaction_controller.viewHistory(userID);
+
+		if (transactions.isEmpty()) {
+			welcomeLbl.setText("No Purchase History Available");
+		} else {
+			ObservableList<Item> items = FXCollections.observableArrayList();
+			for (Transaction transaction : transactions) {
+				// Mendapatkan detail item berdasarkan Transaction
+				Item item = item_controller.getItemById(transaction.getItemID());
+				if (item != null) {
+					item.setTransactionID(transaction.getTransactionID()); // Set Transaction ID
+					items.add(item);
+				}
+			}
+			homePageItemsTable.setItems(items);
+		}
 	}
 
 	@Override

@@ -8,6 +8,10 @@ import model.Item;
 
 public class ItemController {
 	private Item itemModel = new Item();
+	
+	public Item getItemById(String itemID) {
+		return itemModel.getItemById(itemID);
+	}
 
 	public String uploadItem(String name, String category, String size, String price, String userID) {
 		// validate and do insert new item
