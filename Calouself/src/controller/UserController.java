@@ -40,11 +40,8 @@ public class UserController {
 		// role nya (klo berhasil login)
 		ArrayList<User> users = new ArrayList<>();
 		users = getUsers(users);
-<<<<<<< HEAD
 //		String alert = "";
 		
-=======
->>>>>>> dev-selika
 		ArrayList<String> temp = new ArrayList<String>();
 		
 		// Validasi untuk admin
