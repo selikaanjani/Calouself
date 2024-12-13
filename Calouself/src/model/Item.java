@@ -3,11 +3,8 @@ package model;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.List;
 
-import javax.management.loading.PrivateClassLoader;
-
-import controller.ItemController;
+import controller.UserController;
 import database.Connect;
 
 public class Item {
@@ -18,7 +15,7 @@ public class Item {
 //	 Price VARCHAR(255) NOT NULL,
 //	 UserID VARCHAR(255) NOT NULL, //buat seller nya siapa
 //	 ItemStatus VARCHAR(255) NOT NULL, //pending accepted denied
-//	 ItemWishlist VARCHAR(255), //?
+//	 OfferPrice VARCHAR(255), // offer price
 //	 ItemOfferStatus VARCHAR(255), //ini not null dlu krna blm tentu bkl ada offer apa lgi pas baru create udah psti blm ada
 //	 FOREIGN KEY (UserID) REFERENCES User(UserID))
 
@@ -28,8 +25,9 @@ public class Item {
 	private String size;
 	private String price;
 	private String itemStatus;
-	private String itemWishlist;
+	private String offerPrice;
 	private String itemOfferStatus;
+
 	private String transactionID;
 
 	public String getTransactionID() {
@@ -41,7 +39,7 @@ public class Item {
 	}
 
 	public Item(String itemID, String name, String category, String size, String price, String itemStatus,
-			String itemWishlist, String itemOfferStatus) {
+			String offerPrice, String itemOfferStatus) {
 		super();
 		this.itemID = itemID;
 		this.name = name;
@@ -49,7 +47,7 @@ public class Item {
 		this.size = size;
 		this.price = price;
 		this.itemStatus = itemStatus;
-		this.itemWishlist = itemWishlist;
+		this.offerPrice = offerPrice;
 		this.itemOfferStatus = itemOfferStatus;
 	}
 
@@ -61,16 +59,21 @@ public class Item {
 		this.size = size;
 		this.price = price;
 		this.itemStatus = itemStatus;
-		// itemwishlist krg tau apa, itemofferstatus klo baru create krna emg blm ada
+		// itemofferstatus klo baru create krna emg blm ada
 		// offer jdi kosong dlu
 	}
-	
-	public Item(String itemID, String name, String category, String size) {
+
+	public Item(String itemID, String name, String category, String size, String price, String offerPrice,
+			String itemOfferStatus) {
 		super();
 		this.itemID = itemID;
 		this.name = name;
 		this.category = category;
 		this.size = size;
+		this.price = price;
+		this.offerPrice = offerPrice;
+		this.itemOfferStatus = itemOfferStatus;
+		// constructor untuk create offer
 	}
 
 	public Item() {
@@ -125,12 +128,12 @@ public class Item {
 		this.itemStatus = itemStatus;
 	}
 
-	public String getItemWishlist() {
-		return itemWishlist;
+	public String getOfferPrice() {
+		return offerPrice;
 	}
 
-	public void setItemWishlist(String itemWishlist) {
-		this.itemWishlist = itemWishlist;
+	public void setOfferPrice(String offerPrice) {
+		this.offerPrice = offerPrice;
 	}
 
 	public String getItemOfferStatus() {
@@ -141,136 +144,108 @@ public class Item {
 		this.itemOfferStatus = itemOfferStatus;
 	}
 
+	Transaction tr = new Transaction();
+	User user = new User();
+	UserController uc = new UserController();
+
 	// ACCESS TO DB
 	private Connect connect = Connect.getInstance();
 
-//	public String acceptOffer(String itemID) {
-//		Transaction tr = new Transaction();
-//		User user = new User();
-//		String userID = user.getUserID();
-//		String transactionID = tr.generateTransactionID();
-//		tr.createTransaction(transactionID, userID, itemID);
-//		return itemID;
-//	}
-
 	public String acceptOffer(String itemID) {
-		Transaction tr = new Transaction();
-		User user = new User();
-		String userID = user.getUserID();
-		String transactionID = tr.generateTransactionID();
-		tr.createTransaction(transactionID, userID, itemID);
-		return "Offer for item " + itemID + " has been accepted.";
+		String query = "UPDATE item SET ItemOfferStatus = 'Accepted' WHERE ItemID = ?";
+
+		try (PreparedStatement prepQuery = connect.preparedStatement(query)) {
+			prepQuery.setString(1, itemID);
+
+			int affectedRows = prepQuery.executeUpdate();
+
+			if (affectedRows > 0) {
+				String transactionID = tr.generateTransactionID();
+				User curr = uc.getCurrentlyLoggedInUser();
+				String userID = curr.getUserID();
+				tr.createTransaction(transactionID, userID, itemID);
+
+				return "Offer accepted successfully!";
+			} else {
+				return "Failed to accept offer.";
+			}
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return "Error accepting offer.";
+		}
 	}
 
 	public String declineOffer(String itemID) {
-		String query = "DELETE FROM Offer WHERE ItemID = ?";
-
-		try (PreparedStatement stmt = connect.preparedStatement(query)) {
-			stmt.setString(1, itemID);
-
-			int rowsAffected = stmt.executeUpdate();
-
-			if (rowsAffected > 0) {
-				System.out.println("Offer for item " + itemID + " has been declined.");
-				return "Offer for item " + itemID + " has been declined.";
-			} else {
-				System.out.println("No offer found for item " + itemID);
-				return "No offer found for item " + itemID;
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-			return "Error: Unable to decline offer for item " + itemID;
-		}
-	}
-
-	public List<Offer> getOfferedItems() {
-		String query = "SELECT o.offerID, o.userID, o.itemID, o.offerPrice, i.name, i.category, i.size "
-				+ "FROM Offer o " + "JOIN Item i ON o.itemID = i.itemID";
-
-		List<Offer> offers = new ArrayList<>();
-
-		try (PreparedStatement stmt = connect.preparedStatement(query)) {
-
-			while (connect.rs.next()) {
-				String offerID = connect.rs.getString("offerID");
-				String userID = connect.rs.getString("userID");
-				String itemID = connect.rs.getString("itemID");
-				String offerPrice = connect.rs.getString("offerPrice");
-				String name = connect.rs.getString("name");
-				String category = connect.rs.getString("category");
-				String size = connect.rs.getString("size");
-
-				Item item = new Item(itemID, name, category, size);
-				Offer offer = new Offer(offerID, userID, itemID, offerPrice);
-
-				offers.add(offer);
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return offers;
-	}
-
-	public String highestOffer(String itemID) {
-		String currentHighestOfferQuery = "SELECT MAX(OfferPrice) FROM Offer WHERE ItemID = ?";
-		String currentHighestOffer = "0";
-		try (PreparedStatement stmt = connect.preparedStatement(currentHighestOfferQuery)) {
-			stmt.setString(1, itemID);
-			connect.rs = stmt.executeQuery();
-			if (connect.rs.next()) {
-				currentHighestOffer = String.valueOf(connect.rs.getDouble(1));
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-			return "Error fetching the highest offer price.";
-		}
-		return currentHighestOffer;
-	}
-
-	public String offerPrice(String itemID, String userID, String offerPrice) {
-		String offerID = "";
-		String query = "SELECT MAX(OfferID) FROM Offer";
+		String query = "UPDATE item SET ItemOfferStatus = 'Declined' WHERE ItemID = ?";
 
 		try (PreparedStatement prepQuery = connect.preparedStatement(query)) {
+			prepQuery.setString(1, itemID);
+
+			int affectedRows = prepQuery.executeUpdate();
+
+			if (affectedRows > 0) {
+				return "Offer declined successfully!";
+			} else {
+				return "Failed to decline offer.";
+			}
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return "Error declining offer.";
+		}
+	}
+
+	public String getOfferedPrice(String itemID) {
+		String query = "SELECT OfferPrice FROM item WHERE ItemID = ?";
+		try (PreparedStatement prepQuery = connect.preparedStatement(query)) {
+			prepQuery.setString(1, itemID);
 			connect.rs = prepQuery.executeQuery();
 
 			if (connect.rs.next()) {
-				String lastOfferID = connect.rs.getString(1);
-				// generate offer id
-				if (lastOfferID != null) {
-					int lastNumber = Integer.parseInt(lastOfferID.substring(2));
-					offerID = String.format("OF%03d", lastNumber + 1);
-				} else {
-					offerID = "OF001";
-				}
-			}
-
-			String insertQuery = "INSERT INTO Offer (OfferID, ItemID, UserID, OfferPrice) VALUES (?, ?, ?, ?)";
-			try (PreparedStatement insertStmt = connect.preparedStatement(insertQuery)) {
-				insertStmt.setString(1, offerID);
-				insertStmt.setString(2, itemID);
-				insertStmt.setString(3, userID);
-				insertStmt.setString(4, offerPrice);
-				int rowsAffected = insertStmt.executeUpdate();
-				if (rowsAffected > 0) {
-					System.out.println("Offer submitted successfully with OfferID: " + offerID);
-					return "success";
-				} else {
-					System.out.println("Failed to submit the offer.");
-					return "error";
-				}
-			} catch (SQLException e) {
-				e.printStackTrace();
-				return "Error while inserting the offer.";
+				return connect.rs.getString("OfferPrice");
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
-			return "Error while retrieving the last OfferID.";
+		}
+		return null;
+	}
+
+	public String offerPrice(String itemID, String offerPrice, String itemPrice) {
+		String query = "UPDATE item SET OfferPrice = ?, ItemOfferStatus = ? WHERE ItemID = ?";
+		String status = "Pending";
+		try (PreparedStatement prepQuery = connect.preparedStatement(query)) {
+			prepQuery.setString(1, offerPrice);
+			prepQuery.setString(2, status);
+			prepQuery.setString(3, itemID);
+
+			int rowsUpdated = prepQuery.executeUpdate();
+			if (rowsUpdated > 0) {
+				return "Offer submitted successfully!";
+			} else {
+				return "Item not found!";
+			}
+		} catch (SQLException e) {
+			return "Database error: " + e.getMessage();
 		}
 	}
 
+	public String getHighestOffer(String itemID) {
+		String query = "SELECT MAX(CAST(OfferPrice AS DECIMAL)) AS highest_offer FROM item WHERE ItemID = ?";
+		try (PreparedStatement prepQuery = connect.preparedStatement(query)) {
+			prepQuery.setString(1, itemID);
+			if (connect.rs.next()) {
+				return connect.rs.getString("highest_offer");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return "0";
+
+	}
+
 	public Item getItemById(String itemID) {
-		String query = "SELECT * FROM Item WHERE ItemID = ?";
+		String query = "SELECT * FROM item WHERE ItemID = ?";
 		try (PreparedStatement prepQuery = connect.preparedStatement(query)) {
 			prepQuery.setString(1, itemID);
 			connect.rs = prepQuery.executeQuery();
@@ -309,9 +284,9 @@ public class Item {
 				String size = connect.rs.getString("Size");
 				String price = connect.rs.getString("Price");
 				String itemStatus = connect.rs.getString("ItemStatus");
-				String itemWishlist = connect.rs.getString("ItemWishlist");
+				String offerPrice = connect.rs.getString("OfferPrice");
 				String itemOfferStatus = connect.rs.getString("ItemOfferStatus");
-				items.add(new Item(id, name, category, size, price, itemStatus, itemWishlist, itemOfferStatus));
+				items.add(new Item(id, name, category, size, price, itemStatus, offerPrice, itemOfferStatus));
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -339,9 +314,9 @@ public class Item {
 				String size = connect.rs.getString("Size");
 				String price = connect.rs.getString("Price");
 				String itemStatus = connect.rs.getString("ItemStatus");
-				String itemWishlist = connect.rs.getString("ItemWishlist");
+				String offerPrice = connect.rs.getString("OfferPrice");
 				String itemOfferStatus = connect.rs.getString("ItemOfferStatus");
-				items.add(new Item(id, name, category, size, price, itemStatus, itemWishlist, itemOfferStatus));
+				items.add(new Item(id, name, category, size, price, itemStatus, offerPrice, itemOfferStatus));
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -385,9 +360,9 @@ public class Item {
 				String size = connect.rs.getString("Size");
 				String price = connect.rs.getString("Price");
 				String itemStatus = connect.rs.getString("ItemStatus");
-				String itemWishlist = connect.rs.getString("ItemWishlist");
+				String offerPrice = connect.rs.getString("OfferPrice");
 				String itemOfferStatus = connect.rs.getString("ItemOfferStatus");
-				items.add(new Item(id, name, category, size, price, itemStatus, itemWishlist, itemOfferStatus));
+				items.add(new Item(id, name, category, size, price, itemStatus, offerPrice, itemOfferStatus));
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -409,9 +384,9 @@ public class Item {
 				String size = connect.rs.getString("Size");
 				String price = connect.rs.getString("Price");
 				String itemStatus = connect.rs.getString("ItemStatus");
-				String itemWishlist = connect.rs.getString("ItemWishlist");
+				String offerPrice = connect.rs.getString("OfferPrice");
 				String itemOfferStatus = connect.rs.getString("ItemOfferStatus");
-				items.add(new Item(id, name, category, size, price, itemStatus, itemWishlist, itemOfferStatus));
+				items.add(new Item(id, name, category, size, price, itemStatus, offerPrice, itemOfferStatus));
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -500,9 +475,9 @@ public class Item {
 				String size = connect.rs.getString("Size");
 				String price = connect.rs.getString("Price");
 				String itemStatus = connect.rs.getString("ItemStatus");
-				String itemWishlist = connect.rs.getString("ItemWishlist");
+				String offerPrice = connect.rs.getString("OfferPrice");
 				String itemOfferStatus = connect.rs.getString("ItemOfferStatus");
-				items.add(new Item(id, name, category, size, price, itemStatus, itemWishlist, itemOfferStatus));
+				items.add(new Item(id, name, category, size, price, itemStatus, offerPrice, itemOfferStatus));
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();

@@ -1,40 +1,46 @@
 package controller;
 
 import java.util.ArrayList;
-import java.util.List;
-
 import model.Item;
-import model.Offer;
 
 public class ItemController {
 	private Item itemModel = new Item();
-	
+
 	public String acceptOffer(String itemID) {
-		return itemModel.acceptOffer(itemID);
+		return itemModel.acceptOffer(itemID); 
 	}
-	
+
 	public String declineOffer(String itemID) {
 		return itemModel.declineOffer(itemID);
 	}
-	
-	public List<Offer> getOfferedItems() {
-		return itemModel.getOfferedItems();
+
+	public String getOfferedPrice(String itemID) {
+		return itemModel.getOfferedPrice(itemID);
 	}
 
-	public String offerPrice(String itemID, String userID, String offerPrice) {
-		String highOffer = itemModel.highestOffer(itemID);
-		double parsedOfferPrice = Double.parseDouble(offerPrice);
-		double parsedHighestPrice = Double.parseDouble(highOffer);
-		// validasi
-		if (offerPrice.isEmpty()) {
-			return "Price can't be empty";
-		} else if (parsedOfferPrice <= 0) {
-			return "Offer price must be more than 0";
-		} else if (parsedOfferPrice <= parsedHighestPrice) {
-			return "Offer price must be higher than current highest price";
+	public String offerPrice(String itemID, String offerPrice, String itemPrice) {
+		if (offerPrice == null || offerPrice.trim().isEmpty()) {
+			return "Offer price cannot be empty!";
 		}
-		offerPrice = String.valueOf(parsedOfferPrice);
-		return itemModel.offerPrice(itemID, userID, offerPrice);
+
+		double offeredPriceValue;
+		double originalPrice;
+		try {
+			offeredPriceValue = Double.parseDouble(offerPrice);
+			originalPrice = Double.parseDouble(itemPrice);
+
+			if (offeredPriceValue <= 0) {
+				return "Offer price must be more than zero!";
+			}
+			if (offeredPriceValue < originalPrice) {
+				return "Offer price cannot be lower than the original price!";
+			}
+
+		} catch (NumberFormatException e) {
+			return "Invalid offer price format!";
+		}
+
+		return itemModel.offerPrice(itemID, offerPrice, itemPrice);
 	}
 
 	public Item getItemById(String itemID) {

@@ -104,7 +104,7 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 		TableColumn<Item, String> sizeCol = createTableColumn("Size", "size");
 		TableColumn<Item, String> priceCol = createTableColumn("Price", "price");
 
-		// Actions column: Add to Wishlist, Purchase, make offer
+		// Actions column: Add to Wishlist, Purchase, Make Offer
 		TableColumn<Item, Void> actionCol = new TableColumn<>("Actions");
 		actionCol.setMinWidth(300);
 		actionCol.setCellFactory(param -> new TableCell<Item, Void>() {
@@ -128,7 +128,6 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 		            Item item = getTableView().getItems().get(getIndex());
 		            view.Main.redirect(new MakeOfferPage(item).scene);
 		        });
-
 
 				hbox.getChildren().addAll(addToWishlistBtn, purchaseBtn, makeOfferBtn);
 				hbox.setAlignment(Pos.CENTER);

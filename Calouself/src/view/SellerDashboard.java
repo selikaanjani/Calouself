@@ -1,12 +1,11 @@
 package view;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Optional;
 
 import controller.ItemController;
 import controller.TransactionController;
 import controller.UserController;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -18,8 +17,8 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
+import javafx.stage.Stage;
 import model.Item;
-import model.Offer;
 
 public class SellerDashboard implements EventHandler<ActionEvent> {
 	public Scene scene;
@@ -46,9 +45,9 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 	private ArrayList<Item> sellerHistoryItems = new ArrayList<>();
 	private String tempID; // to store the itemID on the mouse clicked event
 	private VBox viewOfferedItemsPane;
-	private TableView<Offer> offeredItemsTable;
-	private Button acceptBtn, declineBtn;
+	private TableView<Item> offeredItemsTable;
 	private TransactionController transaction_controller = new TransactionController();
+	private ObservableList<Item> offeredItemsList;
 
 	public SellerDashboard() {
 		initializeComponents();
@@ -76,6 +75,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 		uploadItemMenuItem = new MenuItem("Upload New Item");
 		viewAllItemsHistoryMenuItem = new MenuItem("View All Items History");
 		viewOfferedItem = new MenuItem("View offered item");
+		viewOfferedItemsPane = new VBox();
 	}
 
 	private void initializeMenuBar() {
@@ -297,87 +297,111 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 	}
 
 	private void initializeViewOfferedItemsPane() {
-		viewOfferedItemsPane = new VBox(10);
-		viewOfferedItemsPane.setPadding(new Insets(20));
-		viewOfferedItemsPane.setAlignment(Pos.CENTER);
-
-		Label titleViewOfferedItemsLbl = new Label("View Offered Items");
-		titleViewOfferedItemsLbl.setStyle("-fx-font-weight: bold;");
-
 		offeredItemsTable = new TableView<>();
-		TableColumn<Offer, String> nameCol = new TableColumn<>("Name");
-		nameCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getItem().getName()));
 
-		TableColumn<Offer, String> categoryCol = new TableColumn<>("Category");
-		categoryCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getItem().getCategory()));
+		TableColumn<Item, String> itemNameColumn = new TableColumn<>("Item Name");
+		itemNameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
 
-		TableColumn<Offer, String> sizeCol = new TableColumn<>("Size");
-		sizeCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getItem().getSize()));
+		TableColumn<Item, String> itemCategoryColumn = new TableColumn<>("Category");
+		itemCategoryColumn.setCellValueFactory(new PropertyValueFactory<>("category"));
 
-		TableColumn<Offer, String> initialPriceCol = new TableColumn<>("Initial Price");
-		initialPriceCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getItem().getPrice()));
+		TableColumn<Item, String> itemSizeColumn = new TableColumn<>("Size");
+		itemSizeColumn.setCellValueFactory(new PropertyValueFactory<>("size"));
 
-		TableColumn<Offer, String> offeredPriceCol = new TableColumn<>("Offered Price");
-		offeredPriceCol.setCellValueFactory(new PropertyValueFactory<>("offeredPrice"));
+		// Correct data binding for Initial Price and Offered Price columns
+		TableColumn<Item, Double> initialPriceColumn = new TableColumn<>("Initial Price");
+		initialPriceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
 
-		TableColumn<Offer, Void> actionCol = new TableColumn<>("Actions");
-		actionCol.setCellFactory(col -> new TableCell<Offer, Void>() {
+		TableColumn<Item, Double> offeredPriceColumn = new TableColumn<>("Offered Price");
+		offeredPriceColumn.setCellValueFactory(new PropertyValueFactory<>("offerPrice"));
+
+		// Define action column with buttons (Accept/Decline)
+		TableColumn<Item, Void> actionColumn = new TableColumn<>("Actions");
+		actionColumn.setMinWidth(200);
+		actionColumn.setCellFactory(col -> new TableCell<>() {
 			private final Button acceptButton = new Button("Accept");
 			private final Button declineButton = new Button("Decline");
+			
 
 			{
 				acceptButton.setOnAction(e -> {
-					Offer selectedOffer = getTableRow().getItem();
-					if (selectedOffer != null) {
-						String itemID = selectedOffer.getItem().getItemID();
-						String result = item_controller.acceptOffer(itemID);
-						System.out.println(result);
-						refreshOfferedItemsTable();
-					}
+					Item selectedItem = getTableView().getItems().get(getIndex());
+					String transactionId = transaction_controller.generateTransactionID();
+					String userId = user_controller.getCurrentlyLoggedInUser().getUserID();
+					item_controller.acceptOffer(selectedItem.getItemID());
+					offeredItemsList.remove(selectedItem);
 				});
 
 				declineButton.setOnAction(e -> {
-					Offer selectedOffer = getTableRow().getItem();
-					if (selectedOffer != null) {
-						String itemID = selectedOffer.getItem().getItemID();
-						String result = item_controller.declineOffer(itemID);
-						System.out.println(result);
-						refreshOfferedItemsTable();
+					Item selectedItem = getTableView().getItems().get(getIndex());
+					String reason = showDeclineReasonDialog();
+					if (reason == null || reason.trim().isEmpty()) {
+						showAlert("Reason cannot be empty!", reason);
+						return;
+					}
+
+					String result = item_controller.declineOffer(selectedItem.getItemID());
+					if (result.contains("successfully")) {
+						offeredItemsList.remove(selectedItem);
+					} else {
+						showSuccess(reason, reason);
 					}
 				});
 			}
 
 			@Override
-			public void updateItem(Void item, boolean empty) {
+			protected void updateItem(Void item, boolean empty) {
 				super.updateItem(item, empty);
-				if (!empty) {
-					HBox actionBox = new HBox(10, acceptButton, declineButton);
-					setGraphic(actionBox);
-				} else {
+				if (empty) {
 					setGraphic(null);
+				} else {
+					HBox buttonsBox = new HBox(5, acceptButton, declineButton);
+					setGraphic(buttonsBox);
 				}
 			}
 		});
 
-		offeredItemsTable.getColumns().addAll(nameCol, categoryCol, sizeCol, initialPriceCol, offeredPriceCol,
-				actionCol);
-		offeredItemsTable.setMaxWidth(800);
-		offeredItemsTable.setMinHeight(400);
+		// Add columns to the table
+		offeredItemsTable.getColumns().addAll(itemNameColumn, itemCategoryColumn, itemSizeColumn, initialPriceColumn,
+				offeredPriceColumn, actionColumn);
 
-		viewOfferedItemsPane.getChildren().addAll(titleViewOfferedItemsLbl, offeredItemsTable);
+		// Create and set table data
+		offeredItemsList = FXCollections.observableArrayList();
+		offeredItemsTable.setItems(offeredItemsList);
+
+		offeredItemsTable.setMaxWidth(850);
+		offeredItemsTable.setMinHeight(500);
+		offeredItemsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+		// Create a VBox for the table and set its alignment and padding
+		VBox sellerPane = new VBox();
+		sellerPane.setSpacing(10);
+		sellerPane.setPadding(new Insets(10));
+		sellerPane.setAlignment(Pos.CENTER); // Center the table inside the VBox
+		sellerPane.getChildren().add(offeredItemsTable);
 
 		// Refresh the table data
 		refreshOfferedItemsTable();
+
+		// Add the VBox to the main view
+		viewOfferedItemsPane.getChildren().add(sellerPane);
 	}
 
 	private void refreshOfferedItemsTable() {
-		List<Offer> offeredItems = item_controller.getOfferedItems();
-		if (offeredItems != null && !offeredItems.isEmpty()) {
-			ObservableList<Offer> items = FXCollections.observableArrayList(offeredItems);
-			offeredItemsTable.setItems(items);
-		} else {
-			System.out.println("No offered items found.");
-		}
+		ArrayList<Item> offeredItems = item_controller.getAllItems();
+		offeredItemsList.clear();
+		offeredItemsList.addAll(offeredItems);
+	}
+
+	private String showDeclineReasonDialog() {
+		// Show a dialog for the seller to provide a reason for declining
+		TextInputDialog dialog = new TextInputDialog();
+		dialog.setTitle("Decline Offer");
+		dialog.setHeaderText("Please provide a reason for declining the offer.");
+		dialog.setContentText("Reason:");
+
+		Optional<String> result = dialog.showAndWait();
+		return result.orElse(null);
 	}
 
 	private void showAlert(String title, String message) {
