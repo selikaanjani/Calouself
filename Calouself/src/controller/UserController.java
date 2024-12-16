@@ -117,8 +117,7 @@ public class UserController {
 		// udah slsi validasi
 
 		// do insert user
-		userModel.registerUser(username, password, phoneNumber, address, role);
-		alert = "User registration successful!";
+		alert = userModel.registerUser(username, password, phoneNumber, address, role);
 		return alert;
 	}
 

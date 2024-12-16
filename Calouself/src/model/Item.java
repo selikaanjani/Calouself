@@ -163,9 +163,9 @@ public class Item {
 				String transactionID = tr.generateTransactionID();
 				User curr = uc.getCurrentlyLoggedInUser();
 				String userID = curr.getUserID();
-				tr.createTransaction(transactionID, userID, itemID);
+				String alert = tr.createTransaction(transactionID, userID, itemID);
 
-				return "Offer accepted successfully!";
+				return alert;
 			} else {
 				return "Failed to accept offer.";
 			}
@@ -177,7 +177,10 @@ public class Item {
 	}
 
 	public String declineOffer(String itemID) {
-		String query = "UPDATE item SET ItemOfferStatus = 'Declined' WHERE ItemID = ?";
+	    System.out.println("Declining offer for item: " + itemID);
+
+		String query = "UPDATE item SET ItemOfferStatus = 'Declined', OfferPrice = 0 WHERE ItemID = ?";
+		//ini kita kek mau refresh aja gitu loh
 
 		try (PreparedStatement prepQuery = connect.preparedStatement(query)) {
 			prepQuery.setString(1, itemID);
@@ -203,15 +206,16 @@ public class Item {
 			connect.rs = prepQuery.executeQuery();
 
 			if (connect.rs.next()) {
-				return connect.rs.getString("OfferPrice");
+				String offerPrice = connect.rs.getString("OfferPrice");
+                return (offerPrice != null && !offerPrice.trim().isEmpty()) ? offerPrice : "0";
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		return null;
+		return "0";
 	}
 
-	public String offerPrice(String itemID, String offerPrice, String itemPrice) {
+	public String offerPrice(String itemID, String offerPrice) {
 		String query = "UPDATE item SET OfferPrice = ?, ItemOfferStatus = ? WHERE ItemID = ?";
 		String status = "Pending";
 		try (PreparedStatement prepQuery = connect.preparedStatement(query)) {
@@ -230,18 +234,41 @@ public class Item {
 		}
 	}
 
-	public String getHighestOffer(String itemID) {
-		String query = "SELECT MAX(CAST(OfferPrice AS DECIMAL)) AS highest_offer FROM item WHERE ItemID = ?";
+	public String getCurrentOfferPrice(String itemID) {
+		String query = "SELECT item.OfferPrice AS offerPrice FROM item WHERE ItemID = ?";
 		try (PreparedStatement prepQuery = connect.preparedStatement(query)) {
 			prepQuery.setString(1, itemID);
 			if (connect.rs.next()) {
-				return connect.rs.getString("highest_offer");
+				return connect.rs.getString("offerPrice");
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		return "0";
+	}
+	
+	public ArrayList<Item> getSellerOfferedItems(String userID) {
+		ArrayList<Item> items = new ArrayList<>();
+		String query = "SELECT * FROM item WHERE UserID = ? AND item.ItemOfferStatus = 'Pending';";
+		try (PreparedStatement prepQuery = connect.preparedStatement(query)) {
+			prepQuery.setString(1, userID);
+			connect.rs = prepQuery.executeQuery();
 
+			if (connect.rs.next()) {
+				String itemID = connect.rs.getString("ItemID");
+				String name = connect.rs.getString("Name");
+				String category = connect.rs.getString("Category");
+				String size = connect.rs.getString("Size");
+				String price = connect.rs.getString("Price");
+				String itemStatus = connect.rs.getString("ItemStatus");
+				String itemOfferPrice = connect.rs.getString("OfferPrice");
+
+				items.add(new Item(itemID, name, category, size, price,  itemOfferPrice, itemStatus));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return items;
 	}
 
 	public Item getItemById(String itemID) {
@@ -272,7 +299,7 @@ public class Item {
 
 		try {
 			try {
-				prepQuery.setString(1, "Approved");
+				prepQuery.setString(1, "Accepted");
 				connect.rs = prepQuery.executeQuery();
 			} catch (SQLException e) {
 				e.printStackTrace();
@@ -439,7 +466,7 @@ public class Item {
 			int rowsAffected = prepQuery.executeUpdate();
 
 			if (rowsAffected > 0) {
-				return "Item edit successful!";
+				return "item edit successful!";
 			} else {
 				return "No such item found. update failed.";
 			}
@@ -449,7 +476,7 @@ public class Item {
 	}
 
 	public void approveItem(String itemID) {
-		String query = "UPDATE item SET ItemStatus = 'Approved' WHERE ItemID = ?";
+		String query = "UPDATE item SET ItemStatus = 'Accepted' WHERE ItemID = ?";
 		PreparedStatement prepQuery = connect.preparedStatement(query);
 
 		try {
@@ -484,5 +511,36 @@ public class Item {
 		}
 		return items;
 	}
+
+	public ArrayList<Item> getPendingItems() {
+		// return all items that have havent been reviewed by the admin
+		ArrayList<Item> items = new ArrayList<>();
+		String query = "SELECT * FROM item WHERE item.ItemStatus = ?";
+		PreparedStatement prepQuery = connect.preparedStatement(query);
+
+		try {
+			try {
+				prepQuery.setString(1, "Pending");
+				connect.rs = prepQuery.executeQuery();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			while (connect.rs.next()) {
+				String id = connect.rs.getString("ItemID");
+				String name = connect.rs.getString("Name");
+				String category = connect.rs.getString("Category");
+				String size = connect.rs.getString("Size");
+				String price = connect.rs.getString("Price");
+				String itemStatus = connect.rs.getString("ItemStatus");
+				String offerPrice = connect.rs.getString("OfferPrice");
+				String itemOfferStatus = connect.rs.getString("ItemOfferStatus");
+				items.add(new Item(id, name, category, size, price, itemStatus, offerPrice, itemOfferStatus));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return items;
+	}
+	
 
 }

@@ -1,6 +1,7 @@
 package view;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 import controller.ItemController;
 import controller.UserController;
@@ -148,14 +149,23 @@ public class AdminDashboard implements EventHandler<ActionEvent> {
 
 				rejectButton.setOnAction(event -> {
 					Item item = getTableView().getItems().get(getIndex());
-					String result = itemController.deleteItem(item.getItemID());
-					if (result.equals("item delete successful!")) {
-						showSuccess("Item Deleted", "The item has been deleted.");
-						refreshItemsTable();
-						refreshHomeTable();
-					} else {
-						showAlert("Error", "There was an issue deleting the item.");
-					}
+					String reasonConfirm = askReasonDialog();
+					if (reasonConfirm != null && !reasonConfirm.equals("cancel")) {
+						if (reasonConfirm.equals("empty")) {
+				            showAlert("Error", "Failed to reject item because the reason cannot be empty!");
+				        } else {
+				        	String result = itemController.deleteItem(item.getItemID());
+				            if (result.equals("item delete successful!")) {
+				                showSuccess("Item Deleted", "The item has been deleted.");
+				                refreshItemsTable();
+				                refreshHomeTable();
+				            } else {
+				                showAlert("Error", "There was an issue deleting the item.");
+				            }
+				        }
+				    } else if (reasonConfirm.equals("cancel")) {
+				        showAlert("Cancelled", "Item rejection was cancelled.");
+				    }
 				});
 			}
 
@@ -184,7 +194,7 @@ public class AdminDashboard implements EventHandler<ActionEvent> {
 	}
 
 	private void refreshItemsTable() {
-		ObservableList<Item> items = FXCollections.observableArrayList(itemController.getAllItems());
+		ObservableList<Item> items = FXCollections.observableArrayList(itemController.getPendingItems());
 		itemsTable.setItems(items); // Mengupdate tabel dengan data item
 	}
 
@@ -212,4 +222,37 @@ public class AdminDashboard implements EventHandler<ActionEvent> {
 		alert.setContentText(message);
 		alert.showAndWait();
 	}
+	
+	private String askReasonDialog() {
+	    Dialog<String> dialog = new Dialog<>();
+	    dialog.setTitle("Input reason for item rejection");
+	    dialog.setHeaderText("Please enter a reason:");
+
+	    TextField reasonField = new TextField();
+	    reasonField.setPromptText("Enter your reason");
+
+	    VBox content = new VBox(reasonField);
+	    content.setSpacing(10);
+	    dialog.getDialogPane().setContent(content);
+
+	    dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+	    dialog.setResultConverter(dialogButton -> {
+	        if (dialogButton == ButtonType.OK) {
+	            String reason = reasonField.getText().trim();
+	            if (reason.isEmpty()) {
+	                return "empty"; 
+	            } else {
+	                return reason; 
+	            }
+	        } else if (dialogButton == ButtonType.CANCEL) {
+	            return "cancel"; 
+	        }
+	        return null;
+	    });
+
+	    Optional<String> result = dialog.showAndWait();
+	    return result.orElse(null); 
+	}
+
 }

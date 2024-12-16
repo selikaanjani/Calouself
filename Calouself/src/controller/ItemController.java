@@ -22,25 +22,27 @@ public class ItemController {
 		if (offerPrice == null || offerPrice.trim().isEmpty()) {
 			return "Offer price cannot be empty!";
 		}
+		
+		String alreadyOfferedPrice = getOfferedPrice(itemID);
+		int alrOffered = Integer.parseInt(alreadyOfferedPrice);
+		System.out.println("Already Offered Price: " + alreadyOfferedPrice);
 
-		double offeredPriceValue;
-		double originalPrice;
+		int offeredPriceValue;
 		try {
-			offeredPriceValue = Double.parseDouble(offerPrice);
-			originalPrice = Double.parseDouble(itemPrice);
+			offeredPriceValue = Integer.parseInt(offerPrice);
 
 			if (offeredPriceValue <= 0) {
 				return "Offer price must be more than zero!";
 			}
-			if (offeredPriceValue < originalPrice) {
-				return "Offer price cannot be lower than the original price!";
+			if (offeredPriceValue < alrOffered) {
+				return "Offer price cannot be lower than the current offer price!";
 			}
 
 		} catch (NumberFormatException e) {
 			return "Invalid offer price format!";
 		}
 
-		return itemModel.offerPrice(itemID, offerPrice, itemPrice);
+		return itemModel.offerPrice(itemID, offerPrice);
 	}
 
 	public Item getItemById(String itemID) {
@@ -133,7 +135,11 @@ public class ItemController {
 		// do update/edit
 		String result = itemModel.editItem(name, category, size, price, itemID);
 
-		return "Item edit successful!";
+		return result;
+	}
+	
+	public ArrayList<Item> getSellerOfferedItems(String userID) {
+		return itemModel.getSellerOfferedItems(userID);
 	}
 
 	// void untuk mengubah status item menjadi Approve
@@ -151,6 +157,10 @@ public class ItemController {
 
 	public ArrayList<Item> getAllItems() {
 		return itemModel.getAllItems();
+	}
+	
+	public ArrayList<Item> getPendingItems() {
+		return itemModel.getPendingItems();
 	}
 
 	public ArrayList<Item> getSellerAcceptedItems(ArrayList<Item> items, String userID) {

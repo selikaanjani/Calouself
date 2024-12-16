@@ -66,16 +66,20 @@ public class Transaction {
 		}
 
 		int numericPart = Integer.parseInt(lastID.substring(2));
-		return String.format("TR%03d", numericPart + 1);
+		String newID = String.format("TR%03d", numericPart + 1);
+//		System.out.println(lastID);
+//		System.out.println(newID);
+		return newID;
 	}
 
 	public String createTransaction(String transactionID, String userID, String itemID) {
+		System.out.println("nyoba");
 		if (transactionID == null || userID == null || itemID == null) {
 			return "Error: Invalid transaction details!";
 		}
 
 		String insertQuery = "INSERT INTO Transaction (TransactionID, UserID, ItemID) VALUES (?, ?, ?)";
-		String deleteWishlistQuery = "DELETE FROM Wishlist WHERE UserID = ? AND ItemID = ?";
+		String deleteWishlistQuery = "DELETE FROM Wishlist WHERE ItemID = ?";
 
 		try (PreparedStatement prepQuery = connect.preparedStatement(insertQuery)) {
 			prepQuery.setString(1, transactionID);
@@ -87,8 +91,7 @@ public class Transaction {
 			if (rowsAffected > 0) {
 				// Hapus item dari wishlist
 				try (PreparedStatement deleteQuery = connect.preparedStatement(deleteWishlistQuery)) {
-					deleteQuery.setString(1, userID);
-					deleteQuery.setString(2, itemID);
+					deleteQuery.setString(1, itemID);
 					int wishlistRowsAffected = deleteQuery.executeUpdate();
 
 					if (wishlistRowsAffected > 0) {

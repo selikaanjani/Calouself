@@ -94,6 +94,10 @@ public class MakeOfferPage implements EventHandler<ActionEvent> {
 				sizeLbl.setText("Size: " + selectedItem.getSize());
 				priceLbl.setText("Price: " + selectedItem.getPrice());
 				String offerPrice = item_controller.getOfferedPrice(selectedItem.getItemID());
+				if (offerPrice.equals("0")) {
+					offerPrice = "null";
+					//brarti blm ada
+				}
 				currentOfferLbl.setText("Current Offer Price: " + offerPrice);
 
 			}

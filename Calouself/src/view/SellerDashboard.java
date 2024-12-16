@@ -59,7 +59,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 		borderContainer.setCenter(homePane);
 		scrollContainer.setContent(borderContainer);
 
-		scene = new Scene(scrollContainer, 900, 600);
+		scene = new Scene(scrollContainer, 650, 400);
 		view.Main.redirect(scene);
 	}
 
@@ -329,23 +329,29 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 					String transactionId = transaction_controller.generateTransactionID();
 					String userId = user_controller.getCurrentlyLoggedInUser().getUserID();
 					item_controller.acceptOffer(selectedItem.getItemID());
-					offeredItemsList.remove(selectedItem);
+//					offeredItemsList.remove(selectedItem); ini aku sengaja comment krna aku lgi mau debug, lgian ini ssalah juga anjir hrsnya ga remove kek gini tpi sbnrnya u hrs ganti itemofferstatus sm refresh offer price nya lol
 				});
 
 				declineButton.setOnAction(e -> {
 					Item selectedItem = getTableView().getItems().get(getIndex());
-					String reason = showDeclineReasonDialog();
-					if (reason == null || reason.trim().isEmpty()) {
-						showAlert("Reason cannot be empty!", reason);
-						return;
-					}
+				    if (selectedItem == null) {
+				        System.out.println("No item selected");
+				    } else {
+				        System.out.println("Selected item ID: " + selectedItem.getItemID());
+				        String reason = showDeclineReasonDialog();
+				        if (reason == null || reason.trim().isEmpty()) {
+				            showAlert("Reason cannot be empty!", reason);
+				            return;
+				        }
 
-					String result = item_controller.declineOffer(selectedItem.getItemID());
-					if (result.contains("successfully")) {
-						offeredItemsList.remove(selectedItem);
-					} else {
-						showSuccess(reason, reason);
-					}
+				        String result = item_controller.declineOffer(selectedItem.getItemID());
+				        if (result.contains("successfully")) {
+				            offeredItemsList.remove(selectedItem);
+				            refreshOfferedItemsTable();
+				        } else {
+				            showSuccess(reason, reason);
+				        }
+				    }
 				});
 			}
 
@@ -388,7 +394,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 	}
 
 	private void refreshOfferedItemsTable() {
-		ArrayList<Item> offeredItems = item_controller.getAllItems();
+		ArrayList<Item> offeredItems = item_controller.getSellerOfferedItems(user_controller.getCurrentlyLoggedInUser().getUserID());
 		offeredItemsList.clear();
 		offeredItemsList.addAll(offeredItems);
 	}
@@ -459,7 +465,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 	private void refreshManageItemTable() {
 		// refresh/re-obtain table data
 		sellerAcceptedItems.removeAll(sellerAcceptedItems);
-		sellerAcceptedItems = item_controller.getSellerHistoryItems(sellerAcceptedItems,
+		sellerAcceptedItems = item_controller.getSellerAcceptedItems(sellerAcceptedItems,
 				user_controller.getCurrentlyLoggedInUser().getUserID());
 		ObservableList<Item> sellerAccItemsObs = FXCollections.observableArrayList(sellerAcceptedItems);
 		sellerAcceptedItemsTable.setItems(sellerAccItemsObs);
@@ -517,6 +523,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 				refreshManageItemTable();
 				refreshHomeTable();
 				refreshHistoryItemTable();
+				refreshOfferedItemsTable();
 			} else {
 				// upload failure
 				showAlert("Item Upload", alert);
@@ -536,6 +543,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 				refreshManageItemTable();
 				refreshHomeTable();
 				refreshHistoryItemTable();
+				refreshOfferedItemsTable();
 			} else {
 				// edit failure
 				showAlert("Item Edit", alert);
@@ -553,6 +561,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 				refreshManageItemTable();
 				refreshHomeTable();
 				refreshHistoryItemTable();
+				refreshOfferedItemsTable();
 			} else {
 				// delete failure
 				showAlert("Item Delete", alert);

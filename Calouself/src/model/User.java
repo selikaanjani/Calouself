@@ -111,6 +111,7 @@ public class User {
 
 	public String generateUserID() {
 		ArrayList<User> users = new ArrayList<>();
+		users = getUsers(users);
 		// mau bikin newID dgn format ID = US001
 		String lastID = users.isEmpty() ? "US000" : users.get(users.size() - 1).getUserID();
 		int numericPart = Integer.parseInt(lastID.substring(2));
@@ -135,7 +136,7 @@ public class User {
 		} catch (SQLException e) {
 			return "error register user: " + e.getMessage();
 		}
-		return "User registration successful!";
+		return "user registration successful!";
 	}
 
 	
