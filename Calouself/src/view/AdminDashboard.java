@@ -144,7 +144,7 @@ public class AdminDashboard implements EventHandler<ActionEvent> {
 					showSuccess("Item Approved", "The item has been approved.");
 					refreshItemsTable();
 					refreshHomeTable();
-					getTableView().getItems().remove(getIndex());
+//					getTableView().getItems().remove(getIndex());
 				});
 
 				rejectButton.setOnAction(event -> {

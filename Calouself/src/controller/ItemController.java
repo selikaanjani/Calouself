@@ -18,7 +18,7 @@ public class ItemController {
 		return itemModel.getOfferedPrice(itemID);
 	}
 
-	public String offerPrice(String itemID, String offerPrice, String itemPrice) {
+	public String offerPrice(String itemID, String offerPrice, String itemPrice, String offerUserID) {
 		if (offerPrice == null || offerPrice.trim().isEmpty()) {
 			return "Offer price cannot be empty!";
 		}
@@ -42,7 +42,7 @@ public class ItemController {
 			return "Invalid offer price format!";
 		}
 
-		return itemModel.offerPrice(itemID, offerPrice);
+		return itemModel.offerPrice(itemID, offerPrice, offerUserID);
 	}
 
 	public Item getItemById(String itemID) {

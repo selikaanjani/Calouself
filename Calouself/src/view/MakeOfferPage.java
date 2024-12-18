@@ -124,7 +124,7 @@ public class MakeOfferPage implements EventHandler<ActionEvent> {
 			String offerPrice = offerPriceField.getText().trim();
 			String itemID = selectedItem.getItemID();
 			String itemPrice = selectedItem.getPrice().toString();
-			String result = item_controller.offerPrice(itemID, offerPrice, itemPrice);
+			String result = item_controller.offerPrice(itemID, offerPrice, itemPrice, user_controller.getCurrentlyLoggedInUser().getUserID());
 			if ("Offer submitted successfully!".equals(result)) {
 				showSuccess("Success", "Your offer has been submitted!");
 				view.Main.redirect(new BuyerDashboard().scene);

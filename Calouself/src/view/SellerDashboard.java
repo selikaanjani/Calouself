@@ -297,6 +297,10 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 	}
 
 	private void initializeViewOfferedItemsPane() {
+		Label welcomeLbl5 = new Label("Welcome Seller " + user_controller.getCurrentlyLoggedInUser().getUsername() + "!");
+		welcomeLbl5.setStyle("-fx-font-weight: bold;");
+//		titleUploadItemLbl = new Label("View Offer");
+//		titleUploadItemLbl.setStyle("-fx-font-weight: bold;");
 		offeredItemsTable = new TableView<>();
 
 		TableColumn<Item, String> itemNameColumn = new TableColumn<>("Item Name");
@@ -326,10 +330,12 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 			{
 				acceptButton.setOnAction(e -> {
 					Item selectedItem = getTableView().getItems().get(getIndex());
-					String transactionId = transaction_controller.generateTransactionID();
-					String userId = user_controller.getCurrentlyLoggedInUser().getUserID();
-					item_controller.acceptOffer(selectedItem.getItemID());
-//					offeredItemsList.remove(selectedItem); ini aku sengaja comment krna aku lgi mau debug, lgian ini ssalah juga anjir hrsnya ga remove kek gini tpi sbnrnya u hrs ganti itemofferstatus sm refresh offer price nya lol
+					String alert = item_controller.acceptOffer(selectedItem.getItemID());
+//					if (alert.equals("Transaction successful and item removed from wishlist!")) {
+//						showSuccess("Success", "accept offer succesful, item removed from home display and transaction created.");
+//					}
+					refreshOfferedItemsTable();
+					refreshHomeTable();
 				});
 
 				declineButton.setOnAction(e -> {
@@ -384,7 +390,7 @@ public class SellerDashboard implements EventHandler<ActionEvent> {
 		sellerPane.setSpacing(10);
 		sellerPane.setPadding(new Insets(10));
 		sellerPane.setAlignment(Pos.CENTER); // Center the table inside the VBox
-		sellerPane.getChildren().add(offeredItemsTable);
+		sellerPane.getChildren().addAll(welcomeLbl5, offeredItemsTable);
 
 		// Refresh the table data
 		refreshOfferedItemsTable();

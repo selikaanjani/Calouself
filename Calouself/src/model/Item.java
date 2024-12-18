@@ -1,6 +1,7 @@
 package model;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
@@ -14,9 +15,12 @@ public class Item {
 //	 Size VARCHAR(255) NOT NULL,
 //	 Price VARCHAR(255) NOT NULL,
 //	 UserID VARCHAR(255) NOT NULL, //buat seller nya siapa
-//	 ItemStatus VARCHAR(255) NOT NULL, //pending accepted denied
+//	 ItemStatus VARCHAR(255) NOT NULL, //pending accepted 
 //	 OfferPrice VARCHAR(255), // offer price
 //	 ItemOfferStatus VARCHAR(255), //ini not null dlu krna blm tentu bkl ada offer apa lgi pas baru create udah psti blm ada
+//	BoughtStatus VARCHAR(255), //udah dibeli apa blm
+//	OfferUserID VARCHAR(255), //userID yg taro offer skrg
+//	FOREIGN KEY(OfferUserID) REFERENCES User(UserID),
 //	 FOREIGN KEY (UserID) REFERENCES User(UserID))
 
 	private String itemID;
@@ -150,31 +154,80 @@ public class Item {
 
 	// ACCESS TO DB
 	private Connect connect = Connect.getInstance();
+	
+	public String getOfferUserID(String itemID) {
+	    String query = "SELECT item.OfferUserID AS offerUserID FROM item WHERE ItemID = ?";
+	    try (PreparedStatement prepQuery = connect.preparedStatement(query)) {
+	        prepQuery.setString(1, itemID);
+	        connect.rs = prepQuery.executeQuery();
+	        // Execute the query and get the result
+	        if (connect.rs.next()) {
+				String offerUserID = connect.rs.getString("offerUserID");
+                return offerUserID;
+			}
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	        return null;
+	    }
+	    return null;
+	}
 
 	public String acceptOffer(String itemID) {
-		String query = "UPDATE item SET ItemOfferStatus = 'Accepted' WHERE ItemID = ?";
+	    // First, get the offerUserID
+	    String offerUserID = getOfferUserID(itemID);
+	    if (offerUserID == null) {
+	        return "Error: Offer user ID not found";
+	    }
 
-		try (PreparedStatement prepQuery = connect.preparedStatement(query)) {
-			prepQuery.setString(1, itemID);
+	    // Now, update the item status
+	    String query = "UPDATE item SET ItemOfferStatus = 'Accepted', BoughtStatus = 'yes' WHERE ItemID = ?";
+	    try (PreparedStatement prepQuery = connect.preparedStatement(query)) {
+	        prepQuery.setString(1, itemID);
+	        int affectedRows = prepQuery.executeUpdate();
 
-			int affectedRows = prepQuery.executeUpdate();
-
-			if (affectedRows > 0) {
-				String transactionID = tr.generateTransactionID();
-				User curr = uc.getCurrentlyLoggedInUser();
-				String userID = curr.getUserID();
-				String alert = tr.createTransaction(transactionID, userID, itemID);
-
-				return alert;
-			} else {
-				return "Failed to accept offer.";
-			}
-
-		} catch (SQLException e) {
-			e.printStackTrace();
-			return "Error accepting offer.";
-		}
+	        if (affectedRows > 0) {
+	            // After successfully updating, generate a transaction ID
+	            String transactionID = tr.generateTransactionID();
+	            String alert = tr.createTransaction(transactionID, offerUserID, itemID);
+	            return alert;
+	        } else {
+	            return "Failed to accept offer.";
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	        return "Error accepting offer.";
+	    }
 	}
+
+
+	
+//	public String acceptOffer(String itemID) {
+//		String query = "UPDATE item SET ItemOfferStatus = 'Accepted', SET BoughtStatus = 'yes' WHERE ItemID = ?";
+//		String offerUserID = getOfferUserID(itemID);
+//		
+//		if (offerUserID == null) {
+//			return "error, offerUserID not found";
+//		}
+//
+//		try (PreparedStatement prepQuery = connect.preparedStatement(query)) {
+//			prepQuery.setString(1, itemID);
+//
+//			int affectedRows = prepQuery.executeUpdate();
+//
+//			if (affectedRows > 0) {
+//				String transactionID = tr.generateTransactionID();
+//				String alert = tr.createTransaction(transactionID, offerUserID, itemID);
+//
+//				return alert;
+//			} else {
+//				return "Failed to accept offer.";
+//			}
+//
+//		} catch (SQLException e) {
+//			e.printStackTrace();
+//			return "Error accepting offer.";
+//		}
+//	}
 
 	public String declineOffer(String itemID) {
 	    System.out.println("Declining offer for item: " + itemID);
@@ -215,13 +268,14 @@ public class Item {
 		return "0";
 	}
 
-	public String offerPrice(String itemID, String offerPrice) {
-		String query = "UPDATE item SET OfferPrice = ?, ItemOfferStatus = ? WHERE ItemID = ?";
+	public String offerPrice(String itemID, String offerPrice, String offerUserID) {
+		String query = "UPDATE item SET OfferPrice = ?, ItemOfferStatus = ?, OfferUserID = ? WHERE ItemID = ?";
 		String status = "Pending";
 		try (PreparedStatement prepQuery = connect.preparedStatement(query)) {
 			prepQuery.setString(1, offerPrice);
 			prepQuery.setString(2, status);
-			prepQuery.setString(3, itemID);
+			prepQuery.setString(3, offerUserID);
+			prepQuery.setString(4, itemID);
 
 			int rowsUpdated = prepQuery.executeUpdate();
 			if (rowsUpdated > 0) {
@@ -270,31 +324,40 @@ public class Item {
 		}
 		return items;
 	}
-
+	
 	public Item getItemById(String itemID) {
-		String query = "SELECT * FROM item WHERE ItemID = ?";
-		try (PreparedStatement prepQuery = connect.preparedStatement(query)) {
-			prepQuery.setString(1, itemID);
-			connect.rs = prepQuery.executeQuery();
+	    String query = "SELECT * FROM item WHERE ItemID = ?";
+	    try (PreparedStatement prepQuery = connect.preparedStatement(query)) {
+	        prepQuery.setString(1, itemID);
+	        connect.rs = prepQuery.executeQuery();
+	        
+	        // Ensure the ResultSet is not null and there is data in it
+	        if (connect.rs != null && connect.rs.next()) {
+	            String name = connect.rs.getString("Name");
+	            String category = connect.rs.getString("Category");
+	            String size = connect.rs.getString("Size");
+	            String price = connect.rs.getString("Price");
+	            String itemStatus = connect.rs.getString("ItemStatus");
+	            String offerPrice = connect.rs.getString("OfferPrice");
+	            String itemOfferStatus = connect.rs.getString("itemOfferStatus");
 
-			if (connect.rs.next()) {
-				String name = connect.rs.getString("Name");
-				String category = connect.rs.getString("Category");
-				String size = connect.rs.getString("Size");
-				String price = connect.rs.getString("Price");
-				String itemStatus = connect.rs.getString("ItemStatus");
-
-				return new Item(itemID, name, category, size, price, itemStatus);
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return null;
+	            // Update the price if the item offer status is "Accepted"
+	            if ("Accepted".equals(itemOfferStatus)) {
+	                price = offerPrice;
+	            }
+	            return new Item(itemID, name, category, size, price, itemStatus);
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    } 
+	    return null; 
 	}
+
+
 
 	public ArrayList<Item> getAcceptedItems(ArrayList<Item> items) {
 		// return all items that have been accepted by admin
-		String query = "SELECT * FROM item WHERE item.ItemStatus = ?";
+		String query = "SELECT * FROM item WHERE item.ItemStatus = ? AND (item.BoughtStatus <> 'yes' OR item.BoughtStatus IS NULL)";
 		PreparedStatement prepQuery = connect.preparedStatement(query);
 
 		try {

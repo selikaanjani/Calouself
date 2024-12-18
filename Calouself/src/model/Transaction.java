@@ -73,13 +73,13 @@ public class Transaction {
 	}
 
 	public String createTransaction(String transactionID, String userID, String itemID) {
-		System.out.println("nyoba");
 		if (transactionID == null || userID == null || itemID == null) {
 			return "Error: Invalid transaction details!";
 		}
 
 		String insertQuery = "INSERT INTO Transaction (TransactionID, UserID, ItemID) VALUES (?, ?, ?)";
 		String deleteWishlistQuery = "DELETE FROM Wishlist WHERE ItemID = ?";
+		String updateItemQuery = "UPDATE item SET BoughtStatus = 'yes' WHERE itemID = ?";
 
 		try (PreparedStatement prepQuery = connect.preparedStatement(insertQuery)) {
 			prepQuery.setString(1, transactionID);
@@ -93,12 +93,19 @@ public class Transaction {
 				try (PreparedStatement deleteQuery = connect.preparedStatement(deleteWishlistQuery)) {
 					deleteQuery.setString(1, itemID);
 					int wishlistRowsAffected = deleteQuery.executeUpdate();
-
-					if (wishlistRowsAffected > 0) {
-						return "Transaction successful and item removed from wishlist!";
-					} else {
-						return "Transaction successful, but item not found in wishlist.";
+					
+					try (PreparedStatement updateQuery = connect.preparedStatement(updateItemQuery)) {
+						updateQuery.setString(1, itemID);
+						int itemRowsAffected = updateQuery.executeUpdate();
+						
+						if (wishlistRowsAffected > 0 && itemRowsAffected > 0) {
+							return "Transaction successful and item removed from wishlist!";
+						} else {
+							return "Transaction successful, but item not found in wishlist.";
+						}
 					}
+
+					
 				}
 			}
 		} catch (SQLException e) {

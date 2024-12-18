@@ -58,8 +58,8 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 		borderContainer.setCenter(homePane);
 		scrollContainer.setContent(borderContainer);
 
-		// scene = new Scene(scrollContainer, 650, 400);
-		scene = new Scene(scrollContainer, 900, 600);
+		 scene = new Scene(scrollContainer, 650, 400);
+//		scene = new Scene(scrollContainer, 900, 600);
 		view.Main.redirect(scene);
 	}
 
@@ -104,10 +104,18 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 		TableColumn<Item, Integer> categoryCol = createTableColumn("Category", "category");
 		TableColumn<Item, String> sizeCol = createTableColumn("Size", "size");
 		TableColumn<Item, String> priceCol = createTableColumn("Price", "price");
+		
+		nameCol.setMaxWidth(600 * 0.2);
+		categoryCol.setMaxWidth(600 * 0.2);
+		sizeCol.setMaxWidth(600 * 0.2);
+		priceCol.setMaxWidth(600 * 0.2);
+		
+
 
 		// Actions column: Add to Wishlist, Purchase, Make Offer
 		TableColumn<Item, Void> actionCol = new TableColumn<>("Actions");
 		actionCol.setMinWidth(300);
+
 		actionCol.setCellFactory(param -> new TableCell<Item, Void>() {
 			private final Button addToWishlistBtn = new Button("Add to Wishlist");
 			private final Button purchaseBtn = new Button("Purchase");
@@ -123,6 +131,7 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 				purchaseBtn.setOnAction(event -> {
 					Item item = getTableView().getItems().get(getIndex());
 					purchaseItem(item);
+					refreshHomeTable();
 				});
 				
 				makeOfferBtn.setOnAction(event -> {
@@ -148,8 +157,8 @@ public class BuyerDashboard implements EventHandler<ActionEvent> {
 		refreshHomeTable();
 
 		homePageItemsTable.getColumns().addAll(nameCol, categoryCol, sizeCol, priceCol, actionCol);
-		homePageItemsTable.setMaxWidth(800);
-		homePageItemsTable.setMinHeight(500);
+		homePageItemsTable.setMaxWidth(600);
+		homePageItemsTable.setMinHeight(300);
 		homePane.getChildren().add(welcomeLbl);
 		homePane.getChildren().add(titleHomeLbl);
 		homePane.getChildren().add(homePageItemsTable);
